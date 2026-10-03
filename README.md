@@ -74,6 +74,8 @@ To install on your iPhone, select it as the device and set your **Team** under S
 - [x] Backend: rooms, rounds, deals, timer, security rules
 - [x] Backend deployed to Firebase
 - [x] iOS app: home, lobby, table, results, game over
+- [x] iPhone and iPad, every orientation
+- [x] Uploaded to App Store Connect
 - [ ] Share with friends through TestFlight
 - [ ] Android app
 
