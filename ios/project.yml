@@ -29,3 +29,20 @@ targets:
         MARKETING_VERSION: "0.1"
         CURRENT_PROJECT_VERSION: "1"
         SWIFT_VERSION: "5.0"
+schemes:
+  CardGame3:
+    build:
+      targets:
+        CardGame3: all
+    run:
+      config: Debug
+    archive:
+      config: Release
+  CardGame3 (Emulators):
+    build:
+      targets:
+        CardGame3: all
+    run:
+      config: Debug
+      environmentVariables:
+        USE_EMULATORS: "1"

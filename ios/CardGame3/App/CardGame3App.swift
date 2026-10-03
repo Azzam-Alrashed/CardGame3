@@ -20,13 +20,11 @@ struct CardGame3App: App {
         }
     }
 
-    /// Debug builds talk to the local Firebase emulators, so no GoogleService-Info.plist is needed yet.
+    /// Uses the live Firebase project by default. The "CardGame3 (Emulators)" scheme sets
+    /// USE_EMULATORS=1 to use the local emulators instead (simulator only).
     private static func configureFirebase() {
-        #if DEBUG
-        let options = FirebaseOptions(googleAppID: "1:628219046474:ios:0000000000000000", gcmSenderID: "628219046474")
-        options.apiKey = "emulator-api-key"
-        options.projectID = "cardgame-3"
-        FirebaseApp.configure(options: options)
+        FirebaseApp.configure()
+        guard ProcessInfo.processInfo.environment["USE_EMULATORS"] == "1" else { return }
 
         let host = "127.0.0.1"
         Auth.auth().useEmulator(withHost: host, port: 9099)
@@ -36,8 +34,5 @@ struct CardGame3App: App {
         settings.isSSLEnabled = false
         settings.cacheSettings = MemoryCacheSettings()
         Firestore.firestore().settings = settings
-        #else
-        FirebaseApp.configure()
-        #endif
     }
 }
