@@ -25,6 +25,8 @@ export const createRoom = onCall((req) => rooms.createRoom(db, uidOf(req), req.d
 export const joinRoom = onCall((req) => rooms.joinRoom(db, uidOf(req), req.data ?? {}));
 export const leaveRoom = onCall((req) => rooms.leaveRoom(db, uidOf(req), req.data ?? {}));
 export const startGame = onCall((req) => rooms.startGame(db, uidOf(req), req.data ?? {}));
+export const addAiPlayer = onCall((req) => rooms.addAiPlayer(db, uidOf(req), req.data ?? {}));
+export const removeAiPlayer = onCall((req) => rooms.removeAiPlayer(db, uidOf(req), req.data ?? {}));
 
 export const bet = onCall((req) => play.bet(db, uidOf(req), req.data ?? {}));
 export const withdraw = onCall((req) => play.withdraw(db, uidOf(req), req.data ?? {}));
