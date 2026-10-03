@@ -1,4 +1,4 @@
-# مداقش — Tech Stack
+# CardGame3 — Tech Stack
 
 How the app is built. For how the game is played, see [RULES.md](RULES.md).
 
