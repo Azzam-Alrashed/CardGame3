@@ -30,7 +30,7 @@ struct CardGame3App: App {
 
         let host = "127.0.0.1"
         Auth.auth().useEmulator(withHost: host, port: 9099)
-        Functions.functions().useEmulator(withHost: host, port: 5001)
+        Functions.functions(region: "me-central1").useEmulator(withHost: host, port: 5001)
         let settings = Firestore.firestore().settings
         settings.host = "\(host):8080"
         settings.isSSLEnabled = false

@@ -2,9 +2,15 @@
 
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import { setGlobalOptions } from "firebase-functions/v2";
 import { CallableRequest, HttpsError, onCall } from "firebase-functions/v2/https";
 import * as play from "./play.js";
 import * as rooms from "./rooms.js";
+
+// Doha: closest Cloud Functions region to the Firestore database in Dammam (me-central2 has no Functions).
+export const REGION = "me-central1";
+// "public" lets phones reach the functions; each one still requires a signed-in user.
+setGlobalOptions({ region: REGION, maxInstances: 10, invoker: "public" });
 
 initializeApp();
 const db = getFirestore();
