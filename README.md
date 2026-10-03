@@ -19,7 +19,7 @@ The full rules are in **[RULES.md](RULES.md)**.
 | --- | --- |
 | `firebase/functions/` | Backend in TypeScript: the rules engine (`src/engine/`), rooms and rounds as Cloud Functions |
 | `firebase/firestore.rules` | Security rules: players see only their own room and their own cards |
-| `ios/` | iOS app in SwiftUI, generated with XcodeGen from `project.yml` |
+| `ios/` | iOS app in SwiftUI (`CardGame3.xcodeproj`) |
 | `assets/` | Logo and wordmark |
 | `android/` | Android app in Kotlin *(coming soon)* |
 
@@ -56,15 +56,9 @@ firebase deploy --only firestore:rules,functions
 
 ## iOS app
 
-You need Xcode and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
+You need Xcode. Open `ios/CardGame3.xcodeproj`.
 
-```bash
-cd ios
-xcodegen generate
-open CardGame3.xcodeproj
-```
-
-Run `xcodegen generate` again whenever you add or move files. The Xcode project itself isn't committed.
+The Xcode project is committed and is the source of truth, including the signing team and other settings. Add new files through Xcode.
 
 | Scheme | Backend |
 | --- | --- |
