@@ -10,7 +10,7 @@ struct RootView: View {
             switch backend.room?.status {
             case nil: HomeView()
             case .lobby: LobbyView()
-            case .playing, .finished: GamePlaceholderView()
+            case .playing, .finished: GameView()
             }
         }
         .foregroundStyle(Theme.ink)
@@ -203,18 +203,6 @@ private struct PlayerBadge: View {
                     .background(Capsule().fill(isHost ? Theme.ink : .white))
                     .foregroundStyle(isHost ? .white : Theme.ink)
             }
-        }
-    }
-}
-
-// MARK: - Game (next step)
-
-struct GamePlaceholderView: View {
-    var body: some View {
-        VStack(spacing: 20) {
-            Blob(color: Theme.blobColors[3], size: 140, mood: .surprised, hair: true)
-            Text("The game has started!").font(Theme.body(28, .heavy))
-            Text("The table screen is the next step.").font(Theme.body(16, .medium)).opacity(0.6)
         }
     }
 }
