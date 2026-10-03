@@ -60,7 +60,7 @@ private struct ResultSummary: View {
     var me: String?
 
     var body: some View {
-        let result = round.result!
+        let result = round.result ?? RoundResult(outcome: .redeal, winnerId: nil, revealed: [], deltas: [:])
         VStack(spacing: 10) {
             Text(headline(result)).font(Theme.wordmark(32)).multilineTextAlignment(.center)
             ForEach(result.revealed, id: \.self) { uid in

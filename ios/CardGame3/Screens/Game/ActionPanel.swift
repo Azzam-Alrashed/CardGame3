@@ -48,7 +48,7 @@ struct ActionPanel: View {
             .onAppear { amount = minBet }
             .onChange(of: round.highestBet) { amount = minBet }
         } else if round.bets[me] != nil {
-            waiting("You're in with \(round.bets[me]!). Waiting for the others…")
+            waiting("You're in with \(round.bets[me] ?? 0). Waiting for the others…")
         } else if round.withdrawn.contains(me) {
             waiting("You sat this one out.")
         } else {
