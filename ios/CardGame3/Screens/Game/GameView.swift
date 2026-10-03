@@ -5,10 +5,10 @@ struct GameView: View {
     @Environment(Backend.self) private var backend
 
     var body: some View {
-        let room = backend.room!
-        if let over = room.gameOver {
+        // The room can disappear (leaving, "Back home") a frame before the screen switches.
+        if let room = backend.room, let over = room.gameOver {
             GameOverView(room: room, over: over)
-        } else if let round = room.round {
+        } else if let room = backend.room, let round = room.round {
             AdaptiveSplit {
                 VStack(spacing: 0) {
                     header(room, round)

@@ -4,7 +4,8 @@ struct LobbyView: View {
     @Environment(Backend.self) private var backend
 
     var body: some View {
-        let room = backend.room!
+        // The room can disappear (leaving) a frame before the screen switches.
+        if let room = backend.room {
         AdaptiveSplit {
           VStack(spacing: 0) {
             VStack(spacing: 4) {
@@ -49,6 +50,7 @@ struct LobbyView: View {
                     .buttonStyle(PillButtonStyle(primary: false))
             }
           }
+        }
         }
     }
 
