@@ -18,7 +18,7 @@ export interface GameOver {
 
 export function newTable(playerIds: readonly string[]): Table {
   return {
-    seats: playerIds.map((id) => ({ id, points: STARTING_POINTS })),
+    seats: playerIds.map((id) => ({ id, points: STARTING_POINTS, changedAt: 0 })),
     dealerIndex: 0,
     roundNumber: 1,
   };

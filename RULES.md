@@ -19,6 +19,7 @@
 - Other players offer to withdraw in return for an amount of the boss's winnings if he wins
 - An offer is just an amount of points, in steps of 500; it can be higher or lower than a previous offer (bluffing allowed)
 - All accepted deals together can never be more than the boss's bet: an offer can be at most what is left of his bet after the deals he already accepted
+- Offers are visible to everyone at the table, as if said out loud
 - The boss accepts or rejects; an acceptance can never be undone
 - A rejected player may make another offer
 - Timer: 1 minute per player in the betting round

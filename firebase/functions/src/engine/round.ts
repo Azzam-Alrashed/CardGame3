@@ -239,7 +239,7 @@ function finish(state: RoundState, result: RoundResult): RoundState {
   const players = state.players.map((p) => ({
     ...p,
     points: p.points + (result.deltas[p.id] ?? 0),
-    changedAt: result.deltas[p.id] ? state.roundNumber : p.changedAt,
+    changedAt: result.deltas[p.id] ? state.roundNumber : (p.changedAt ?? 0),
   }));
   return { ...state, players, offers: {}, phase: "finished", result };
 }
