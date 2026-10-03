@@ -226,7 +226,7 @@ export const botTiming = { minMs: 2000, maxMs: 4000 };
 function pendingBotAction(room: Room, priv: PrivateRound, now: number): BotAction | { kind: "timeUp" } | null {
   const { state, deadline } = priv;
   if (state.phase === "deals" && deadline !== null && now >= deadline) return { kind: "timeUp" };
-  for (const id of room.away ?? []) {
+  for (const id of [...(room.aiPlayers ?? []), ...(room.away ?? [])]) {
     const style = room.botStyles?.[id] ?? "balanced";
     const action = botMove(state, id, style, priv.botOffers?.[id] ?? 0, secureRng);
     if (action) return action;

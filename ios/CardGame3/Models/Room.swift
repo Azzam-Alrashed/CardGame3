@@ -22,6 +22,8 @@ struct Room: Decodable, Equatable {
     let gameOver: GameOver?
     /// Players who stepped away; a bot plays for them.
     let away: [String]?
+    /// AI players added by the host; always played by a bot.
+    let aiPlayers: [String]?
 
     func name(of uid: String) -> String {
         players.first { $0.uid == uid }?.name ?? "?"
@@ -36,6 +38,10 @@ struct Room: Decodable, Equatable {
     func points(of uid: String) -> Int {
         let base = table?.seats.first { $0.id == uid }?.points ?? 0
         return base + (round?.result?.deltas[uid] ?? 0)
+    }
+
+    func isAI(_ uid: String) -> Bool {
+        aiPlayers?.contains(uid) ?? false
     }
 
     func isAway(_ uid: String) -> Bool {

@@ -85,6 +85,20 @@ final class Backend {
         }
     }
 
+    func addAiPlayer() async {
+        guard let code = room?.code else { return }
+        await run {
+            _ = try await functions.httpsCallable("addAiPlayer").call(["code": code])
+        }
+    }
+
+    func removeAiPlayer(_ aiId: String) async {
+        guard let code = room?.code else { return }
+        await run {
+            _ = try await functions.httpsCallable("removeAiPlayer").call(["code": code, "aiId": aiId])
+        }
+    }
+
     func startGame() async {
         guard let code = room?.code else { return }
         await run {

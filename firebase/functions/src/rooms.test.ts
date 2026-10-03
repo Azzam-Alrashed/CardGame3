@@ -2,7 +2,8 @@
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { initializeApp } from "firebase-admin/app";
 import { Firestore, getFirestore } from "firebase-admin/firestore";
-import { Room, createRoom, joinRoom, leaveRoom, randomCode, startGame } from "./rooms.js";
+import { Room, addAiPlayer, createRoom, joinRoom, leaveRoom, randomCode, removeAiPlayer, startGame } from "./rooms.js";
+import { botTiming } from "./play.js";
 
 const onEmulator = !!process.env.FIRESTORE_EMULATOR_HOST;
 
@@ -84,6 +85,63 @@ describe.skipIf(!onEmulator)("rooms", () => {
     await startGame(db, "u0", { code });
     await expect(joinRoom(db, "u9", { code, name: "Late" })).rejects.toThrow(/already started/);
     await expect(leaveRoom(db, "u1", { code })).rejects.toThrow(/in progress/);
+  });
+});
+
+describe.skipIf(!onEmulator)("AI players", () => {
+  let db: Firestore;
+  beforeAll(() => {
+    db = getFirestore();
+    botTiming.minMs = 0;
+    botTiming.maxMs = 0;
+  });
+  beforeEach(async () => {
+    await db.recursiveDelete(db.collection("rooms"));
+  });
+  const read = async (code: string) => (await db.doc(`rooms/${code}`).get()).data() as Room | undefined;
+
+  it("only the host can add or remove AI players, and only in the lobby", async () => {
+    const { code } = await createRoom(db, "u0", { name: "Host" });
+    await joinRoom(db, "u1", { code, name: "Guest" });
+    await expect(addAiPlayer(db, "u1", { code })).rejects.toThrow(/Only the host/);
+    const { id } = await addAiPlayer(db, "u0", { code });
+    await expect(removeAiPlayer(db, "u1", { code, aiId: id })).rejects.toThrow(/Only the host/);
+    await expect(removeAiPlayer(db, "u0", { code, aiId: "u1" })).rejects.toThrow(/isn't an AI/);
+    await removeAiPlayer(db, "u0", { code, aiId: id });
+    const room = (await read(code))!;
+    expect(room.players.map((p) => p.uid)).toEqual(["u0", "u1"]);
+    expect(room.aiPlayers).toEqual([]);
+    expect(room.botStyles).toEqual({});
+  });
+
+  it("AI players get unique names, a style, and fill up to 13 seats", async () => {
+    const { code } = await createRoom(db, "u0", { name: "Host" });
+    for (let i = 0; i < 12; i++) await addAiPlayer(db, "u0", { code });
+    await expect(addAiPlayer(db, "u0", { code })).rejects.toThrow(/full/);
+    const room = (await read(code))!;
+    expect(new Set(room.players.map((p) => p.name)).size).toBe(13);
+    expect(room.aiPlayers).toHaveLength(12);
+    for (const id of room.aiPlayers!) expect(["careful", "balanced", "wild"]).toContain(room.botStyles![id]);
+  });
+
+  it("a room with only AI players left is deleted; host passes to a human", async () => {
+    const { code } = await createRoom(db, "u0", { name: "Host" });
+    await addAiPlayer(db, "u0", { code });
+    await joinRoom(db, "u1", { code, name: "Guest" });
+    await leaveRoom(db, "u0", { code });
+    expect((await read(code))!.hostId).toBe("u1");
+    await leaveRoom(db, "u1", { code });
+    expect(await read(code)).toBeUndefined();
+  });
+
+  it("solo: 1 human + 3 AI players can start, and the AIs play until it's the human's turn", async () => {
+    const { code } = await createRoom(db, "u0", { name: "Host" });
+    for (let i = 0; i < 3; i++) await addAiPlayer(db, "u0", { code });
+    await startGame(db, "u0", { code });
+    const room = (await read(code)) as Room & { round: { phase: string; turnId: string | null } };
+    expect(room.status).toBe("playing");
+    // u0 deals, so the three AIs bet first; the round now waits for the human (or already ended).
+    expect(room.round.phase === "finished" || room.round.turnId === "u0").toBe(true);
   });
 });
 

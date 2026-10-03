@@ -1,12 +1,13 @@
 // Rooms: create, join by code, leave, start.
 // Handlers take the Firestore instance and caller's uid so they can be tested against the emulator.
 
-import { Firestore, FieldValue } from "firebase-admin/firestore";
+import { DocumentReference, FieldValue, Firestore, Transaction } from "firebase-admin/firestore";
+import { randomInt } from "node:crypto";
 import { HttpsError } from "firebase-functions/v2/https";
 import { MAX_PLAYERS, MIN_PLAYERS } from "./engine/cards.js";
 import { Table, newTable } from "./engine/game.js";
-import { dealRound } from "./play.js";
-import type { BotStyle } from "./engine/bot.js";
+import { dealRound, runBots } from "./play.js";
+import { BOT_STYLES, BotStyle } from "./engine/bot.js";
 
 export type RoomStatus = "lobby" | "playing" | "finished";
 
@@ -27,7 +28,9 @@ export interface Room {
   createdAt: FieldValue;
   /** Players who stepped away; a bot plays for them until they come back. */
   away?: string[];
-  /** Each away player's bot personality, kept for the whole game. */
+  /** AI players added by the host; always played by a bot. */
+  aiPlayers?: string[];
+  /** Each away player's or AI player's bot personality, kept for the whole game. */
   botStyles?: Record<string, BotStyle>;
 }
 
@@ -113,12 +116,15 @@ export async function leaveRoom(db: Firestore, uid: string, data: { code?: unkno
     const room = snap.data() as Room;
     if (room.status !== "lobby") throw new HttpsError("failed-precondition", "You can't leave a game in progress");
     const players = room.players.filter((p) => p.uid !== uid);
-    if (players.length === 0) {
+    const ai = new Set(room.aiPlayers ?? []);
+    const humans = players.filter((p) => !ai.has(p.uid));
+    // AI players never keep a room alive on their own.
+    if (humans.length === 0) {
       tx.delete(ref);
       return;
     }
-    // If the host leaves, the next player in the room becomes host.
-    const hostId = room.hostId === uid ? players[0].uid : room.hostId;
+    // If the host leaves, the next human in the room becomes host.
+    const hostId = room.hostId === uid ? humans[0].uid : room.hostId;
     tx.update(ref, { players, playerIds: players.map((p) => p.uid), hostId });
   });
 }
@@ -137,4 +143,64 @@ export async function startGame(db: Firestore, uid: string, data: { code?: unkno
     }
     dealRound(tx, ref, newTable(room.players.map((p) => p.uid)), Date.now(), { status: "playing" });
   });
+  await runBots(db, code); // an AI player may bet first
+}
+
+// MARK: AI players
+
+export const AI_NAMES = [
+  "Lucky Lulu", "Bot Fahd", "Sneaky Sami", "Captain Kings", "Bluffy Bader", "Queenie",
+  "Jack Jr.", "Ace Abdullah", "Dealer Dana", "Mister Maybe", "Wild Waleed", "Calm Khalid", "Noor Nerves",
+].map((n) => `${n} 🤖`);
+
+/** Host only, in the lobby: adds an AI player with a fun name and a random style. */
+export async function addAiPlayer(db: Firestore, uid: string, data: { code?: unknown }): Promise<{ id: string }> {
+  const code = cleanCode(data.code);
+  return db.runTransaction(async (tx) => {
+    const ref = rooms(db).doc(code);
+    const room = await hostLobby(tx, ref, uid);
+    if (room.players.length >= MAX_PLAYERS) throw new HttpsError("failed-precondition", "This room is full");
+    const taken = new Set(room.players.map((p) => p.name));
+    const name = AI_NAMES.find((n) => !taken.has(n)) ?? `AI ${room.players.length + 1} 🤖`;
+    const id = `ai_${randomInt(2 ** 40).toString(36)}`;
+    tx.update(ref, {
+      players: [...room.players, { uid: id, name }],
+      playerIds: [...room.playerIds, id],
+      aiPlayers: [...(room.aiPlayers ?? []), id],
+      botStyles: { ...room.botStyles, [id]: BOT_STYLES[randomInt(BOT_STYLES.length)] },
+    });
+    return { id };
+  });
+}
+
+/** Host only, in the lobby: removes one of the AI players. */
+export async function removeAiPlayer(
+  db: Firestore, uid: string, data: { code?: unknown; aiId?: unknown },
+): Promise<void> {
+  const code = cleanCode(data.code);
+  await db.runTransaction(async (tx) => {
+    const ref = rooms(db).doc(code);
+    const room = await hostLobby(tx, ref, uid);
+    const aiId = data.aiId;
+    if (typeof aiId !== "string" || !(room.aiPlayers ?? []).includes(aiId)) {
+      throw new HttpsError("invalid-argument", "That player isn't an AI player in this room");
+    }
+    const { [aiId]: _, ...botStyles } = room.botStyles ?? {};
+    tx.update(ref, {
+      players: room.players.filter((p) => p.uid !== aiId),
+      playerIds: room.playerIds.filter((p) => p !== aiId),
+      aiPlayers: (room.aiPlayers ?? []).filter((p) => p !== aiId),
+      botStyles,
+    });
+  });
+}
+
+/** Loads the room and checks the caller is its host and the game hasn't started. */
+async function hostLobby(tx: Transaction, ref: DocumentReference, uid: string): Promise<Room> {
+  const snap = await tx.get(ref);
+  if (!snap.exists) throw new HttpsError("not-found", "No room with that code");
+  const room = snap.data() as Room;
+  if (room.hostId !== uid) throw new HttpsError("permission-denied", "Only the host can change AI players");
+  if (room.status !== "lobby") throw new HttpsError("failed-precondition", "The game has already started");
+  return room;
 }

@@ -36,7 +36,7 @@ private struct PlayerChip: View {
                     hair: round.bossId == uid
                 )
                 .overlay(Circle().strokeBorder(.white, lineWidth: isTurn ? 4 : 0))
-                if room.isAway(uid) {
+                if room.isAway(uid) || room.isAI(uid) {
                     Text("🤖").font(.system(size: 16))
                         .frame(width: 26, height: 26)
                         .background(Circle().fill(.white))
