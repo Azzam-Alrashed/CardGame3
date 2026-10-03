@@ -5,6 +5,8 @@ struct HomeView: View {
     @State private var code = ""
     @State private var busy = false
     @State private var bob = false
+    @State private var showRules = false
+    @AppStorage("seenOnboarding") private var seenOnboarding = true
 
     private var hasName: Bool { !backend.playerName.trimmingCharacters(in: .whitespaces).isEmpty }
     private var ready: Bool { hasName && !busy && backend.uid != nil }
@@ -49,6 +51,20 @@ struct HomeView: View {
             }
         }
         .overlay { if busy { ProgressView().controlSize(.large) } }
+        .overlay(alignment: .topTrailing) {
+            Button { showRules = true } label: {
+                Image(systemName: "questionmark")
+                    .font(.system(size: 18, weight: .heavy))
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(.white))
+                    .shadow(color: .black.opacity(0.06), radius: 12, y: 4)
+            }
+            .accessibilityLabel("How to play")
+            .padding(.trailing, 20)
+        }
+        .sheet(isPresented: $showRules) {
+            HowToPlayView { withAnimation { seenOnboarding = false } }
+        }
         .onAppear { bob = true }
     }
 
@@ -73,7 +89,7 @@ struct HomeView: View {
                 Blob(color: Theme.blobColors[1], size: w * 0.22, mood: .happy, look: CGSize(width: -1, height: -1))
                     .position(x: w * 0.8, y: h * 0.84)
                 SpeechBubble(text: "Deal?")
-                    .position(x: w * 0.74, y: h * 0.08)
+                    .position(x: w * 0.6, y: h * 0.08)
             }
             .offset(y: bob ? -4 : 4)
             .animation(.easeInOut(duration: 2).repeatForever(), value: bob)

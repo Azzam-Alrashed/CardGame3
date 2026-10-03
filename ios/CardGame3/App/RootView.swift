@@ -1,13 +1,15 @@
 import SwiftUI
 
-/// Shows the right screen for where the player is: home, lobby, or game.
+/// Shows the right screen for where the player is: intro, home, lobby, or game.
 struct RootView: View {
     @Environment(Backend.self) private var backend
+    @AppStorage("seenOnboarding") private var seenOnboarding = false
 
     var body: some View {
         ZStack {
             screenColor.ignoresSafeArea().animation(.easeInOut, value: backend.room?.status)
             switch backend.room?.status {
+            case nil where !seenOnboarding: OnboardingView { withAnimation { seenOnboarding = true } }
             case nil: HomeView()
             case .lobby: LobbyView()
             case .playing, .finished: GameView()
