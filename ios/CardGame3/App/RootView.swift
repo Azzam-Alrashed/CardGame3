@@ -1,0 +1,37 @@
+import SwiftUI
+
+/// Shows the right screen for where the player is: home, lobby, or game.
+struct RootView: View {
+    @Environment(Backend.self) private var backend
+
+    var body: some View {
+        ZStack {
+            screenColor.ignoresSafeArea().animation(.easeInOut, value: backend.room?.status)
+            switch backend.room?.status {
+            case nil: HomeView()
+            case .lobby: LobbyView()
+            case .playing, .finished: GameView()
+            }
+        }
+        .foregroundStyle(Theme.ink)
+        .task { await backend.signIn() }
+        .alert("Something went wrong", isPresented: errorShown) {
+            Button("OK") { backend.errorMessage = nil }
+        } message: {
+            Text(backend.errorMessage ?? "")
+        }
+    }
+
+    /// Each screen gets its own bold color.
+    private var screenColor: Color {
+        switch backend.room?.status {
+        case nil: Theme.lime
+        case .lobby: Theme.sunny
+        case .playing, .finished: Theme.grape
+        }
+    }
+
+    private var errorShown: Binding<Bool> {
+        Binding(get: { backend.errorMessage != nil }, set: { if !$0 { backend.errorMessage = nil } })
+    }
+}

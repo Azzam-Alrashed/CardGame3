@@ -18,7 +18,8 @@ final class Backend {
         didSet { UserDefaults.standard.set(playerName, forKey: "playerName") }
     }
 
-    private let functions = Functions.functions()
+    /// Same region as the Cloud Functions (Doha).
+    private let functions = Functions.functions(region: "me-central1")
     private var roomListener: ListenerRegistration?
     private var handListener: ListenerRegistration?
     /// Round number we already asked the server to force-reveal, so we only ask once.
