@@ -8,6 +8,7 @@
 import { randomInt } from "node:crypto";
 import { DocumentReference, Firestore, Transaction } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
+import { BOT_STYLES, BotAction, botMove } from "./engine/bot.js";
 import { Card } from "./engine/cards.js";
 import { Table, isGameOver, nextTable } from "./engine/game.js";
 import * as engine from "./engine/round.js";
@@ -39,6 +40,8 @@ export interface PublicRound {
 interface PrivateRound {
   state: RoundState;
   deadline: number | null;
+  /** How many offers each bot made this round. */
+  botOffers?: Record<string, number>;
 }
 
 export function publicView(state: RoundState, deadline: number | null): PublicRound {
@@ -85,16 +88,16 @@ export function dealRound(
 ): void {
   const state = engine.startRound(table.seats, table.dealerIndex, secureRng, table.roundNumber);
   for (const p of state.players) tx.set(handRef(ref, p.id), { cards: p.hand });
-  writeRound(tx, ref, state, now, null, { table, ...roomFields });
+  writeRound(tx, ref, state, now, null, {}, { table, ...roomFields });
 }
 
 function writeRound(
   tx: Transaction, ref: DocumentReference, state: RoundState, now: number, deadline: number | null,
-  roomFields: Record<string, unknown> = {},
+  botOffers: Record<string, number> = {}, roomFields: Record<string, unknown> = {},
 ): void {
   // Start the timer when the round enters the deals phase.
   const d = state.phase === "deals" ? (deadline ?? now + state.timerMs!) : null;
-  const priv: PrivateRound = { state, deadline: d };
+  const priv: PrivateRound = { state, deadline: d, botOffers };
   tx.set(privateRef(ref), priv);
   tx.update(ref, { ...roomFields, round: publicView(state, d) });
 }
@@ -114,7 +117,7 @@ async function move(
     const room = roomSnap.data() as Room;
     if (!room.playerIds.includes(uid)) throw new HttpsError("permission-denied", "You are not in this room");
     if (room.status !== "playing" || !privSnap.exists) throw new HttpsError("failed-precondition", "No round in progress");
-    const { state, deadline } = privSnap.data() as PrivateRound;
+    const { state, deadline, botOffers } = privSnap.data() as PrivateRound;
     const now = Date.now();
     let next: RoundState;
     try {
@@ -123,8 +126,9 @@ async function move(
       if (e instanceof HttpsError) throw e;
       throw new HttpsError("failed-precondition", (e as Error).message);
     }
-    writeRound(tx, ref, next, now, deadline);
+    writeRound(tx, ref, next, now, deadline, botOffers);
   });
+  await runBots(db, code);
 }
 
 export const bet = (db: Firestore, uid: string, d: { code?: unknown; amount?: unknown }) =>
@@ -187,4 +191,92 @@ export async function nextRound(db: Firestore, uid: string, d: { code?: unknown;
     }
     dealRound(tx, ref, outcome, Date.now());
   });
+  await runBots(db, code);
 }
+
+// MARK: Away players and bots
+
+/**
+ * Step away from the table (a bot plays for you) or come back.
+ * Only during a game; in the lobby, players leave the room instead.
+ */
+export async function setAway(db: Firestore, uid: string, d: { code?: unknown; away?: unknown }): Promise<void> {
+  const code = cleanCode(d.code);
+  const ref = roomRef(db, code);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new HttpsError("not-found", "No room with that code");
+    const room = snap.data() as Room;
+    if (!room.playerIds.includes(uid)) throw new HttpsError("permission-denied", "You are not in this room");
+    if (room.status !== "playing") throw new HttpsError("failed-precondition", "No game in progress");
+    const away = new Set(room.away ?? []);
+    if (d.away === true) away.add(uid);
+    else away.delete(uid);
+    const botStyles = { ...room.botStyles };
+    botStyles[uid] ??= BOT_STYLES[randomInt(BOT_STYLES.length)];
+    tx.update(ref, { away: [...away], botStyles });
+  });
+  if (d.away === true) await runBots(db, code);
+}
+
+/** Pause before each bot move so it feels like someone thinking. Tests shorten this. */
+export const botTiming = { minMs: 2000, maxMs: 4000 };
+
+/** The next thing a bot (or the expired timer) should do, or null. */
+function pendingBotAction(room: Room, priv: PrivateRound, now: number): BotAction | { kind: "timeUp" } | null {
+  const { state, deadline } = priv;
+  if (state.phase === "deals" && deadline !== null && now >= deadline) return { kind: "timeUp" };
+  for (const id of room.away ?? []) {
+    const style = room.botStyles?.[id] ?? "balanced";
+    const action = botMove(state, id, style, priv.botOffers?.[id] ?? 0, secureRng);
+    if (action) return action;
+  }
+  return null;
+}
+
+function applyBotAction(state: RoundState, action: BotAction | { kind: "timeUp" }): RoundState {
+  switch (action.kind) {
+    case "bet": return engine.placeBet(state, action.id, action.amount);
+    case "withdraw": return engine.withdraw(state, action.id);
+    case "offer": return engine.makeOffer(state, action.id, action.amount);
+    case "answer":
+      return action.accept
+        ? engine.acceptOffer(state, action.bossId, action.from)
+        : engine.rejectOffer(state, action.bossId, action.from);
+    case "reveal": return engine.reveal(state, action.bossId);
+    case "timeUp": return engine.timeUp(state);
+  }
+}
+
+/**
+ * Plays bot moves one at a time, with a short pause before each, until no bot has anything to do.
+ * Every step re-reads the latest state, so a player coming back stops their bot right away.
+ */
+export async function runBots(db: Firestore, code: string): Promise<void> {
+  const ref = roomRef(db, code);
+  for (let step = 0; step < 100; step++) {
+    const [roomSnap, privSnap] = await Promise.all([ref.get(), privateRef(ref).get()]);
+    const room = roomSnap.data() as Room | undefined;
+    if (!room || room.status !== "playing" || !privSnap.exists) return;
+    if (!pendingBotAction(room, privSnap.data() as PrivateRound, Date.now())) return;
+
+    await sleep(botTiming.minMs + Math.random() * (botTiming.maxMs - botTiming.minMs));
+
+    const acted = await db.runTransaction(async (tx) => {
+      const [rs, ps] = await Promise.all([tx.get(ref), tx.get(privateRef(ref))]);
+      const r = rs.data() as Room | undefined;
+      if (!r || r.status !== "playing" || !ps.exists) return false;
+      const priv = ps.data() as PrivateRound;
+      const now = Date.now();
+      const action = pendingBotAction(r, priv, now);
+      if (!action) return false;
+      const botOffers = { ...priv.botOffers };
+      if (action.kind === "offer") botOffers[action.id] = (botOffers[action.id] ?? 0) + 1;
+      writeRound(tx, ref, applyBotAction(priv.state, action), now, priv.deadline, botOffers);
+      return true;
+    });
+    if (!acted) return;
+  }
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

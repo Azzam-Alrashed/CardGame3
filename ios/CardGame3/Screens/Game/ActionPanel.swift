@@ -30,7 +30,8 @@ struct ActionPanel: View {
     // Betting
 
     /// Smallest bet that beats the highest one.
-    private var minBet: Int { max(Betting.minBet, round.highestBet + Betting.step) }
+    /// Next step of 500 above the highest bet (which may be an odd all-in amount).
+    private var minBet: Int { max(Betting.minBet, (round.highestBet / Betting.step + 1) * Betting.step) }
 
     @ViewBuilder private var betting: some View {
         if round.turnId == me {

@@ -63,6 +63,9 @@ private struct ResultSummary: View {
         let result = round.result ?? RoundResult(outcome: .redeal, winnerId: nil, revealed: [], deltas: [:])
         VStack(spacing: 10) {
             Text(headline(result)).font(Theme.wordmark(32)).multilineTextAlignment(.center)
+            if let paid = dealsPaid(result) {
+                Text("Paid \(paid.formatted()) in deals").font(Theme.body(16, .semibold)).opacity(0.75)
+            }
             ForEach(result.revealed, id: \.self) { uid in
                 HStack(spacing: 4) {
                     Text(uid == me ? "You" : room.name(of: uid))
@@ -93,8 +96,22 @@ private struct ResultSummary: View {
         case .redeal: return "Everyone folded.\nRedeal!"
         default:
             let who = result.winnerId == me ? "You win" : "\(room.name(of: result.winnerId ?? "")) wins"
-            return "\(who) \((result.deltas[result.winnerId ?? ""] ?? 0).formatted())!"
+            return "\(who) \(winAmount(result).formatted())!"
         }
+    }
+
+    /// What the winner won before paying deals: the boss's bet (or the lone entrant's bet).
+    private func winAmount(_ result: RoundResult) -> Int {
+        guard let winner = result.winnerId else { return 0 }
+        if let boss = round.bossId { return round.bets[boss] ?? 0 }
+        return round.bets[winner] ?? result.deltas[winner] ?? 0
+    }
+
+    /// Deals the winning boss paid out, if any.
+    private func dealsPaid(_ result: RoundResult) -> Int? {
+        guard result.winnerId != nil, result.winnerId == round.bossId else { return nil }
+        let total = round.deals.values.reduce(0, +)
+        return total > 0 ? total : nil
     }
 
     private func delta(_ amount: Int) -> some View {

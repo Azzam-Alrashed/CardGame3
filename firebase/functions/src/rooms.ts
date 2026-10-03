@@ -6,6 +6,7 @@ import { HttpsError } from "firebase-functions/v2/https";
 import { MAX_PLAYERS, MIN_PLAYERS } from "./engine/cards.js";
 import { Table, newTable } from "./engine/game.js";
 import { dealRound } from "./play.js";
+import type { BotStyle } from "./engine/bot.js";
 
 export type RoomStatus = "lobby" | "playing" | "finished";
 
@@ -24,6 +25,10 @@ export interface Room {
   playerIds: string[];
   table: Table | null;
   createdAt: FieldValue;
+  /** Players who stepped away; a bot plays for them until they come back. */
+  away?: string[];
+  /** Each away player's bot personality, kept for the whole game. */
+  botStyles?: Record<string, BotStyle>;
 }
 
 /** No I or O, so codes can't be confused with 1 and 0. */

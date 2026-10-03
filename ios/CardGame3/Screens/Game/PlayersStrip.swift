@@ -36,6 +36,12 @@ private struct PlayerChip: View {
                     hair: round.bossId == uid
                 )
                 .overlay(Circle().strokeBorder(.white, lineWidth: isTurn ? 4 : 0))
+                if room.isAway(uid) {
+                    Text("🤖").font(.system(size: 16))
+                        .frame(width: 26, height: 26)
+                        .background(Circle().fill(.white))
+                        .offset(x: -36, y: 34)
+                }
                 if round.dealerId == uid {
                     Text("D").font(Theme.body(12, .black))
                         .frame(width: 22, height: 22)
@@ -43,7 +49,8 @@ private struct PlayerChip: View {
                         .offset(x: 4, y: -4)
                 }
             }
-            Text(isMe ? "You" : room.name(of: uid)).font(Theme.body(13, .bold)).lineLimit(1)
+            Text(isMe ? "You" : room.isAway(uid) ? "\(room.name(of: uid)) · away" : room.name(of: uid))
+                .font(Theme.body(13, .bold)).lineLimit(1).minimumScaleFactor(0.7)
             Text(out ? "Out" : "\(room.points(of: uid))").font(Theme.body(12, .semibold)).opacity(0.7)
             status
         }

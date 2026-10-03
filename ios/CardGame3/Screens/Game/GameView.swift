@@ -3,6 +3,7 @@ import SwiftUI
 /// The table: everyone's status on top, the round's state in the middle, your cards and actions below.
 struct GameView: View {
     @Environment(Backend.self) private var backend
+    @State private var confirmLeave = false
 
     var body: some View {
         // The room can disappear (leaving, "Back home") a frame before the screen switches.
@@ -33,6 +34,20 @@ struct GameView: View {
 
     private func header(_ room: Room, _ round: PublicRound) -> some View {
         HStack {
+            Button {
+                confirmLeave = true
+            } label: {
+                Image(systemName: "door.left.hand.open")
+                    .font(.system(size: 17, weight: .heavy))
+                    .frame(width: 40, height: 40)
+                    .background(Circle().fill(.white))
+            }
+            .foregroundStyle(Theme.ink)
+            .confirmationDialog("Leave the table?", isPresented: $confirmLeave, titleVisibility: .visible) {
+                Button("Leave · a bot plays for me") { Task { await backend.leaveGame() } }
+            } message: {
+                Text("A bot plays your seat with your points until you come back.")
+            }
             Text("Round \(round.roundNumber)").font(Theme.body(17, .heavy))
             Spacer()
             if let uid = backend.uid {

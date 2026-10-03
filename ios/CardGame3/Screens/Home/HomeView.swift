@@ -23,6 +23,11 @@ struct HomeView: View {
             .padding(.bottom, 20)
 
             BottomSheet {
+                if let away = backend.awayRoomCode {
+                    Button("Back to game \(away)") { act { await backend.returnToGame() } }
+                        .buttonStyle(PillButtonStyle())
+                        .disabled(busy || backend.uid == nil)
+                }
                 PillField(placeholder: "Your name", text: $backend.playerName)
                     .textInputAutocapitalization(.words)
 
