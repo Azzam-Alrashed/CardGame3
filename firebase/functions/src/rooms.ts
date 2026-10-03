@@ -5,6 +5,7 @@ import { Firestore, FieldValue } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
 import { MAX_PLAYERS, MIN_PLAYERS } from "./engine/cards.js";
 import { Table, newTable } from "./engine/game.js";
+import { dealRound } from "./play.js";
 
 export type RoomStatus = "lobby" | "playing" | "finished";
 
@@ -129,6 +130,6 @@ export async function startGame(db: Firestore, uid: string, data: { code?: unkno
     if (room.players.length < MIN_PLAYERS) {
       throw new HttpsError("failed-precondition", `You need at least ${MIN_PLAYERS} players`);
     }
-    tx.update(ref, { status: "playing", table: newTable(room.players.map((p) => p.uid)) });
+    dealRound(tx, ref, newTable(room.players.map((p) => p.uid)), Date.now(), { status: "playing" });
   });
 }

@@ -1,0 +1,117 @@
+// Runs against the Firestore emulator: npm run test:emulator
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { getApps, initializeApp } from "firebase-admin/app";
+import { Firestore, getFirestore } from "firebase-admin/firestore";
+import { createRoom, joinRoom, startGame } from "./rooms.js";
+import * as play from "./play.js";
+
+const onEmulator = !!process.env.FIRESTORE_EMULATOR_HOST;
+
+describe.skipIf(!onEmulator)("playing a round", () => {
+  let db: Firestore;
+  let code: string;
+
+  beforeAll(() => {
+    if (!getApps().length) initializeApp({ projectId: "cardgame-3" });
+    db = getFirestore();
+  });
+
+  const room = async () => (await db.doc(`rooms/${code}`).get()).data()!;
+  const round = async () => (await room()).round as play.PublicRound;
+  const privateDoc = () => db.doc(`rooms/${code}/private/round`);
+
+  /** 4 players u0..u3; u0 hosts and is the first dealer, so u1 bets first. */
+  beforeEach(async () => {
+    await db.recursiveDelete(db.collection("rooms"));
+    ({ code } = await createRoom(db, "u0", { name: "Host" }));
+    for (let i = 1; i < 4; i++) await joinRoom(db, `u${i}`, { code, name: `P${i}` });
+    await startGame(db, "u0", { code });
+  });
+
+  /** u1 bets 500, u2 bets 1000 (boss), u3 and u0 withdraw. */
+  async function toDeals() {
+    await play.bet(db, "u1", { code, amount: 500 });
+    await play.bet(db, "u2", { code, amount: 1000 });
+    await play.withdraw(db, "u3", { code });
+    await play.withdraw(db, "u0", { code });
+  }
+
+  it("starting the game deals 4 private cards to each player", async () => {
+    const r = await round();
+    expect(r).toMatchObject({ roundNumber: 1, phase: "betting", dealerId: "u0", turnId: "u1" });
+    const hands = await db.collection(`rooms/${code}/hands`).get();
+    expect(hands.size).toBe(4);
+    hands.forEach((h) => expect(h.data().cards).toHaveLength(4));
+    // The public room document never contains anyone's cards.
+    expect(JSON.stringify(await room())).not.toContain('"suit"');
+  });
+
+  it("enforces turns and bet rules with readable errors", async () => {
+    await expect(play.bet(db, "u2", { code, amount: 500 })).rejects.toThrow(/not u2's turn/);
+    await expect(play.bet(db, "u1", { code, amount: 750 })).rejects.toThrow(/steps of 500/);
+    await expect(play.bet(db, "u1", { code, amount: "500" })).rejects.toThrow(/whole number/);
+    await expect(play.bet(db, "stranger", { code, amount: 500 })).rejects.toThrow(/not in this room/);
+  });
+
+  it("closing the bets picks the boss and starts a 1 minute per entrant timer", async () => {
+    const before = Date.now();
+    await toDeals();
+    const r = await round();
+    expect(r).toMatchObject({ phase: "deals", bossId: "u2", turnId: null, bets: { u1: 500, u2: 1000 } });
+    expect(r.deadline! - before).toBeGreaterThanOrEqual(2 * 60_000 - 1000);
+    expect(r.deadline! - before).toBeLessThanOrEqual(2 * 60_000 + 5000);
+  });
+
+  it("offers and deals: everyone else takes a deal, boss wins automatically", async () => {
+    await toDeals();
+    await play.makeOffer(db, "u1", { code, amount: 500 });
+    expect((await round()).offers).toEqual({ u1: 500 });
+    await play.answerOffer(db, "u2", { code, from: "u1", accept: true });
+    const r = await round();
+    expect(r.phase).toBe("finished");
+    expect(r.result).toMatchObject({ outcome: "allDeals", winnerId: "u2", deltas: { u2: 500, u1: 500 } });
+    expect(r.revealedHands).toEqual({});
+  });
+
+  it("boss reveals: revealed hands become public", async () => {
+    await toDeals();
+    await expect(play.reveal(db, "u1", { code })).rejects.toThrow(/Only the boss/);
+    await play.reveal(db, "u2", { code });
+    const r = await round();
+    expect(r.result!.outcome).toBe("showdown");
+    expect(Object.keys(r.revealedHands).sort()).toEqual(["u1", "u2"]);
+  });
+
+  it("after the timer runs out: no more offers, and anyone can force the reveal", async () => {
+    await toDeals();
+    await expect(play.timeUp(db, "u3", { code })).rejects.toThrow(/still running/);
+    await privateDoc().update({ deadline: Date.now() - 1 });
+    await expect(play.makeOffer(db, "u1", { code, amount: 500 })).rejects.toThrow(/Time is up/);
+    await play.timeUp(db, "u3", { code });
+    expect((await round()).result!.outcome).toBe("showdown");
+  });
+
+  it("next round passes the dealer right, and double calls are harmless", async () => {
+    await toDeals();
+    await play.reveal(db, "u2", { code });
+    await expect(play.nextRound(db, "u0", { code, roundNumber: 2 })).resolves.toBeUndefined();
+    await play.nextRound(db, "u0", { code, roundNumber: 1 });
+    await play.nextRound(db, "u3", { code, roundNumber: 1 }); // late duplicate: ignored
+    const r = await round();
+    expect(r).toMatchObject({ roundNumber: 2, phase: "betting", dealerId: "u1", turnId: "u2" });
+  });
+
+  it("game ends when fewer than 4 players have points", async () => {
+    await toDeals();
+    await play.reveal(db, "u2", { code });
+    // Knock u3 out directly in the stored state.
+    const priv = (await privateDoc().get()).data()!;
+    priv.state.players = priv.state.players.map((p: { id: string }) => (p.id === "u3" ? { ...p, points: 0 } : p));
+    await privateDoc().set(priv);
+    await play.nextRound(db, "u0", { code, roundNumber: 1 });
+    const r = await room();
+    expect(r.status).toBe("finished");
+    expect(r.gameOver.standings).toHaveLength(4);
+    expect((await db.collection(`rooms/${code}/hands`).get()).size).toBe(0);
+  });
+});
