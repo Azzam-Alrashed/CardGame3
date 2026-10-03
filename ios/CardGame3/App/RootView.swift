@@ -8,13 +8,17 @@ struct RootView: View {
     var body: some View {
         ZStack {
             screenColor.ignoresSafeArea().animation(.easeInOut, value: backend.room?.status)
-            switch backend.room?.status {
-            case nil where !seenOnboarding: OnboardingView { withAnimation { seenOnboarding = true } }
-            case nil: HomeView()
-            case .lobby: LobbyView()
-            case .playing, .finished: GameView()
+            Group {
+                switch backend.room?.status {
+                case nil where !seenOnboarding: OnboardingView { withAnimation { seenOnboarding = true } }
+                case nil: HomeView()
+                case .lobby: LobbyView()
+                case .playing, .finished: GameView()
+                }
             }
+            .transition(.blurReplace)
         }
+        .animation(.smooth(duration: 0.45), value: backend.room?.status)
         .foregroundStyle(Theme.ink)
         .task { await backend.signIn() }
         .alert("Something went wrong", isPresented: errorShown) {

@@ -6,14 +6,23 @@ struct PlayersStrip: View {
     var me: String?
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 14) {
-                ForEach(room.players) { player in
-                    PlayerChip(room: room, round: round, uid: player.uid, isMe: player.uid == me)
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 14) {
+                    ForEach(room.players) { player in
+                        PlayerChip(room: room, round: round, uid: player.uid, isMe: player.uid == me)
+                            .id(player.uid)
+                    }
                 }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+                .animation(.spring(duration: 0.4, bounce: 0.4), value: round)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
+            // Keep whoever is acting in view on a crowded table.
+            .onChange(of: round.turnId ?? round.bossId, initial: true) { _, uid in
+                guard let uid else { return }
+                withAnimation(.smooth) { proxy.scrollTo(uid, anchor: .center) }
+            }
         }
     }
 }
@@ -35,7 +44,9 @@ private struct PlayerChip: View {
                     mood: mood,
                     hair: round.bossId == uid
                 )
+                .background { if isTurn { TurnPulse() } }
                 .overlay(Circle().strokeBorder(.white, lineWidth: isTurn ? 4 : 0))
+                .scaleEffect(isTurn ? 1.08 : 1)
                 if room.isAway(uid) || room.isAI(uid) {
                     Text("🤖").font(.system(size: 16))
                         .frame(width: 26, height: 26)
@@ -51,8 +62,9 @@ private struct PlayerChip: View {
             }
             Text(isMe ? "You" : room.isAway(uid) ? "\(room.name(of: uid)) · away" : room.name(of: uid))
                 .font(Theme.body(13, .bold)).lineLimit(1).minimumScaleFactor(0.7)
-            Text(out ? "Out" : "\(room.points(of: uid))").font(Theme.body(12, .semibold)).opacity(0.7)
-            status
+            Text(out ? "Out" : room.points(of: uid).formatted()).font(Theme.body(12, .semibold)).opacity(0.7)
+                .contentTransition(.numericText())
+            status.transition(.scale.combined(with: .opacity))
         }
         .frame(width: 72)
         .opacity(out ? 0.35 : 1)
@@ -88,5 +100,17 @@ private struct PlayerChip: View {
             .padding(.horizontal, 8).padding(.vertical, 3)
             .background(Capsule().fill(dark ? Theme.ink : .white))
             .foregroundStyle(dark ? .white : Theme.ink)
+            .contentTransition(.numericText())
+    }
+}
+
+/// A white ring that keeps growing out of the blob whose turn it is.
+private struct TurnPulse: View {
+    var body: some View {
+        Circle()
+            .stroke(.white, lineWidth: 3)
+            .phaseAnimator([false, true]) { ring, on in
+                ring.scaleEffect(on ? 1.45 : 1).opacity(on ? 0 : 0.9)
+            } animation: { on in on ? .easeOut(duration: 1.1) : nil }
     }
 }

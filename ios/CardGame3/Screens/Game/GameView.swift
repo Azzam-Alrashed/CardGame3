@@ -29,6 +29,16 @@ struct GameView: View {
                     ActionPanel(room: room, round: round)
                 }
             }
+            .overlay {
+                if round.phase == .finished, round.result?.winnerId == backend.uid {
+                    Confetti().ignoresSafeArea().id(round.roundNumber)
+                }
+            }
+            .sensoryFeedback(.impact(weight: .heavy), trigger: round.turnId) { (_: String?, turn: String?) in turn != nil && turn == backend.uid }
+            .sensoryFeedback(trigger: round.phase) { _, phase in
+                guard phase == .finished, let winner = round.result?.winnerId else { return nil }
+                return winner == backend.uid ? .success : .impact(weight: .medium)
+            }
         }
     }
 
@@ -38,21 +48,23 @@ struct GameView: View {
                 confirmLeave = true
             } label: {
                 Image(systemName: "door.left.hand.open")
-                    .font(.system(size: 17, weight: .heavy))
-                    .frame(width: 40, height: 40)
-                    .background(Circle().fill(.white))
             }
-            .foregroundStyle(Theme.ink)
+            .buttonStyle(CircleButtonStyle(size: 40))
+            .accessibilityLabel("Leave the table")
             .confirmationDialog("Leave the table?", isPresented: $confirmLeave, titleVisibility: .visible) {
                 Button("Leave · a bot plays for me") { Task { await backend.leaveGame() } }
             } message: {
                 Text("A bot plays your seat with your points until you come back.")
             }
             Text("Round \(round.roundNumber)").font(Theme.body(17, .heavy))
+                .contentTransition(.numericText())
+                .animation(.snappy, value: round.roundNumber)
             Spacer()
             if let uid = backend.uid {
-                Label("\(room.points(of: uid))", systemImage: "circle.hexagongrid.fill")
-                    .font(Theme.body(17, .heavy))
+                Label(room.points(of: uid).formatted(), systemImage: "circle.hexagongrid.fill")
+                    .font(Theme.body(17, .heavy).monospacedDigit())
+                    .contentTransition(.numericText(value: Double(room.points(of: uid))))
+                    .animation(.smooth(duration: 0.8), value: room.points(of: uid))
                     .padding(.horizontal, 14).padding(.vertical, 8)
                     .background(Capsule().fill(.white))
             }
