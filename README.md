@@ -13,11 +13,20 @@ An app for playing مداقش, the poker-style card game we play with friends. E
 
 The full rules are in **[RULES.md](RULES.md)**.
 
+## Features
+
+- **Rooms with a 4-letter code.** Friends join from their own phones and see every move live.
+- **AI players.** The host can fill empty seats with AI players (up to 13 seats), or play solo against 3 of them.
+- **Step away anytime.** Leave a game in progress and a bot plays your seat until you tap **Back to game**.
+- **A bot that plays fair.** It sees only its own cards, works out its odds by dealing imaginary hands from the cards it hasn't seen, and bluffs now and then.
+- **First-launch onboarding** and a **How to play** sheet.
+- **iPhone and iPad** in every orientation.
+
 ## Project layout
 
 | Folder | What's inside |
 | --- | --- |
-| `firebase/functions/` | Backend in TypeScript: the rules engine (`src/engine/`), rooms and rounds as Cloud Functions |
+| `firebase/functions/` | Backend in TypeScript: the rules engine and the bot (`src/engine/`), plus rooms, rounds and AI players as Cloud Functions |
 | `firebase/firestore.rules` | Security rules: players see only their own room and their own cards |
 | `ios/` | iOS app in SwiftUI (`CardGame3.xcodeproj`) |
 | `assets/` | Logo and wordmark |
@@ -36,6 +45,8 @@ Tech choices are explained in **[TECH_STACK.md](TECH_STACK.md)**.
 
 All game logic runs on the server. Phones only call functions and listen to their room, so nobody can peek at other players' cards.
 
+Bots (AI players and away players) also run on the server. After each move, the server plays any bot turns with a 2–4 second "thinking" pause. Firestore triggers can't be used because Cloud Functions isn't available in Dammam.
+
 ### Tests
 
 You need Node.js. The emulator tests also need Java 21 (`brew install openjdk@21`).
@@ -46,7 +57,7 @@ npm install
 npm run test:emulator
 ```
 
-`npm test` runs only the rules engine tests, without the emulators.
+`npm test` runs only the tests that don't need the emulators: the rules engine and the bot.
 
 ### Deploy
 
@@ -76,6 +87,9 @@ To install on your iPhone, select it as the device and set your **Team** under S
 - [x] iOS app: home, lobby, table, results, game over
 - [x] iPhone and iPad, every orientation
 - [x] Uploaded to App Store Connect
+- [x] Onboarding and How to play
+- [x] Leave mid-game, with a bot playing your seat
+- [x] AI players added by the host
 - [ ] Share with friends through TestFlight
 - [ ] Android app
 
