@@ -1,0 +1,14 @@
+rules_version = '2';
+
+// All writes go through Cloud Functions. Players can only read rooms they are in.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /rooms/{code} {
+      allow read: if request.auth != null && request.auth.uid in resource.data.playerIds;
+      allow write: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
