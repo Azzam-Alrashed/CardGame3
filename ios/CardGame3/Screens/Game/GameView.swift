@@ -9,14 +9,24 @@ struct GameView: View {
         if let over = room.gameOver {
             GameOverView(room: room, over: over)
         } else if let round = room.round {
-            VStack(spacing: 0) {
-                header(room, round)
-                PlayersStrip(room: room, round: round, me: backend.uid)
-                Spacer(minLength: 8)
-                Banner(room: room, round: round, me: backend.uid)
-                Spacer(minLength: 8)
-                MyHand(cards: backend.myCards, revealed: round.revealedHands[backend.uid ?? ""] != nil)
-                ActionPanel(room: room, round: round)
+            AdaptiveSplit {
+                VStack(spacing: 0) {
+                    header(room, round)
+                    PlayersStrip(room: room, round: round, me: backend.uid)
+                    Spacer(minLength: 8)
+                    // Results can be tall; scroll them when the screen is short (landscape).
+                    ViewThatFits(in: .vertical) {
+                        Banner(room: room, round: round, me: backend.uid)
+                        ScrollView { Banner(room: room, round: round, me: backend.uid) }
+                    }
+                    Spacer(minLength: 8)
+                }
+            } side: {
+                VStack(spacing: 0) {
+                    Spacer(minLength: 0)
+                    MyHand(cards: backend.myCards, revealed: round.revealedHands[backend.uid ?? ""] != nil)
+                    ActionPanel(room: room, round: round)
+                }
             }
         }
     }
