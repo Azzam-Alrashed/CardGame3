@@ -36,6 +36,19 @@ final class Backend {
 
     /// Anonymous sign-in for now; Apple and Google sign-in come before release.
     func signIn() async {
+        // A saved session from another backend (e.g. emulators vs live) can't refresh: start over.
+        if let user = Auth.auth().currentUser {
+            do {
+                _ = try await user.getIDToken(forcingRefresh: true)
+            } catch let error as NSError {
+                // Only a rejected session; being offline must not cost a player their seat.
+                let rejected: [AuthErrorCode] = [.userTokenExpired, .invalidUserToken, .userNotFound, .userDisabled]
+                if let code = AuthErrorCode(rawValue: error.code), rejected.contains(code) {
+                    try? Auth.auth().signOut()
+                    uid = nil
+                }
+            }
+        }
         if uid == nil {
             await run {
                 let result = try await Auth.auth().signInAnonymously()
