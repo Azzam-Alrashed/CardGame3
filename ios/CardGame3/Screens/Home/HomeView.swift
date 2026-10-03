@@ -11,9 +11,11 @@ struct HomeView: View {
 
     var body: some View {
         @Bindable var backend = backend
-        VStack(spacing: 0) {
-            hero.frame(maxHeight: .infinity)
-
+        AdaptiveSplit {
+            hero
+        } side: {
+            VStack(spacing: 0) {
+            Spacer(minLength: 0)
             VStack(spacing: 6) {
                 Text("مداقش").font(Theme.wordmark(72))
                 Text("Bet big. Make a deal. Reveal.").font(Theme.body(16, .medium)).opacity(0.7)
@@ -38,6 +40,7 @@ struct HomeView: View {
                         .frame(width: 110)
                         .disabled(!ready || code.count != 4)
                 }
+            }
             }
         }
         .overlay { if busy { ProgressView().controlSize(.large) } }

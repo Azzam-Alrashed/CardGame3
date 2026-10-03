@@ -5,7 +5,8 @@ struct LobbyView: View {
 
     var body: some View {
         let room = backend.room!
-        VStack(spacing: 0) {
+        AdaptiveSplit {
+          VStack(spacing: 0) {
             VStack(spacing: 4) {
                 Text("Share this code").font(Theme.body(15, .medium)).opacity(0.6)
                 Text(room.code)
@@ -31,7 +32,10 @@ struct LobbyView: View {
                 .padding(24)
             }
             .frame(maxHeight: .infinity)
-
+          }
+        } side: {
+          VStack {
+            Spacer(minLength: 0)
             BottomSheet {
                 if backend.isHost {
                     Button(startLabel(room)) { Task { await backend.startGame() } }
@@ -44,6 +48,7 @@ struct LobbyView: View {
                 Button("Leave room") { Task { await backend.leaveRoom() } }
                     .buttonStyle(PillButtonStyle(primary: false))
             }
+          }
         }
     }
 
