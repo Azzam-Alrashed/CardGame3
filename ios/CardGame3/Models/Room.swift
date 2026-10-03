@@ -20,6 +20,8 @@ struct Room: Decodable, Equatable {
     let table: Table?
     let round: PublicRound?
     let gameOver: GameOver?
+    /// Players who stepped away; a bot plays for them.
+    let away: [String]?
 
     func name(of uid: String) -> String {
         players.first { $0.uid == uid }?.name ?? "?"
@@ -34,6 +36,10 @@ struct Room: Decodable, Equatable {
     func points(of uid: String) -> Int {
         let base = table?.seats.first { $0.id == uid }?.points ?? 0
         return base + (round?.result?.deltas[uid] ?? 0)
+    }
+
+    func isAway(_ uid: String) -> Bool {
+        away?.contains(uid) ?? false
     }
 
     func isStillIn(_ uid: String) -> Bool {

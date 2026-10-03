@@ -10,7 +10,8 @@ import * as rooms from "./rooms.js";
 // Doha: closest Cloud Functions region to the Firestore database in Dammam (me-central2 has no Functions).
 export const REGION = "me-central1";
 // "public" lets phones reach the functions; each one still requires a signed-in user.
-setGlobalOptions({ region: REGION, maxInstances: 10, invoker: "public" });
+// Bots play their moves inside the call that triggered them, with pauses, so allow time for that.
+setGlobalOptions({ region: REGION, maxInstances: 10, invoker: "public", timeoutSeconds: 300 });
 
 initializeApp();
 const db = getFirestore();
@@ -32,3 +33,4 @@ export const answerOffer = onCall((req) => play.answerOffer(db, uidOf(req), req.
 export const reveal = onCall((req) => play.reveal(db, uidOf(req), req.data ?? {}));
 export const timeUp = onCall((req) => play.timeUp(db, uidOf(req), req.data ?? {}));
 export const nextRound = onCall((req) => play.nextRound(db, uidOf(req), req.data ?? {}));
+export const setAway = onCall((req) => play.setAway(db, uidOf(req), req.data ?? {}));

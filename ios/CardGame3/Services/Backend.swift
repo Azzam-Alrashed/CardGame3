@@ -41,9 +41,9 @@ final class Backend {
             do {
                 _ = try await user.getIDToken(forcingRefresh: true)
             } catch let error as NSError {
-                // Only a rejected session; being offline must not cost a player their seat.
-                let rejected: [AuthErrorCode] = [.userTokenExpired, .invalidUserToken, .userNotFound, .userDisabled]
-                if let code = AuthErrorCode(rawValue: error.code), rejected.contains(code) {
+                // Being offline must not cost a player their seat; any other failure means the
+                // session is no good here (expired, or from the other backend), so start fresh.
+                if AuthErrorCode(rawValue: error.code) != .networkError {
                     try? Auth.auth().signOut()
                     uid = nil
                 }
@@ -94,6 +94,39 @@ final class Backend {
 
     /// Leaves the screen of a finished game (the server keeps the room as a record).
     func goHome() { stopListening() }
+
+    // MARK: Away
+
+    /// Room code of a game this player stepped away from (shown on Home as "Back to game").
+    private(set) var awayRoomCode: String? = UserDefaults.standard.string(forKey: "awayRoomCode") {
+        didSet { UserDefaults.standard.set(awayRoomCode, forKey: "awayRoomCode") }
+    }
+
+    /// Step away from a game in progress: a bot plays for you until you come back.
+    func leaveGame() async {
+        guard let code = room?.code else { return }
+        await run {
+            _ = try await functions.httpsCallable("setAway").call(["code": code, "away": true])
+            stopListening()
+            awayRoomCode = code
+        }
+    }
+
+    /// Take your seat back from the bot.
+    func returnToGame() async {
+        guard let code = awayRoomCode else { return }
+        await run {
+            do {
+                _ = try await functions.httpsCallable("setAway").call(["code": code, "away": false])
+                listen(to: code)
+            } catch {
+                // The game ended or the room is gone: nothing to go back to.
+                awayRoomCode = nil
+                throw error
+            }
+            awayRoomCode = nil
+        }
+    }
 
     // MARK: Playing
 
