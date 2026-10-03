@@ -1,3 +1,4 @@
-*.xcodeproj/
+# Per-user Xcode state
+xcuserdata/
 build/
 DerivedData/
