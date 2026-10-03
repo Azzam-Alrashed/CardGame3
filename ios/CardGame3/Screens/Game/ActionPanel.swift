@@ -15,10 +15,16 @@ struct ActionPanel: View {
             case .betting: betting
             case .deals: deals
             case .finished:
-                Button("Next round") { Task { await backend.nextRound() } }
+                AsyncButton("Next round") { await backend.nextRound() }
                     .buttonStyle(PillButtonStyle())
             }
         }
+        .blocksWhileBusy()
+        // The boss feels each new offer arrive.
+        .sensoryFeedback(.impact(weight: .medium), trigger: round.offers) { old, new in
+            round.bossId == me && new.count > old.count
+        }
+        .animation(.spring(duration: 0.4, bounce: 0.3), value: round)
         .padding(20)
         .background(
             UnevenRoundedRectangle(topLeadingRadius: 32, topTrailingRadius: 32)
@@ -37,23 +43,23 @@ struct ActionPanel: View {
         if round.turnId == me {
             if minBet <= myPoints {
                 AmountPicker(amount: $amount, range: minBet...roundDown(myPoints))
-                Button("Bet \(amount)") { Task { await backend.bet(amount) } }
+                AsyncButton("Bet \(amount.formatted())") { await backend.bet(amount) }
                     .buttonStyle(PillButtonStyle())
             }
             HStack(spacing: 12) {
-                Button("All in \(myPoints)") { Task { await backend.bet(myPoints) } }
+                AsyncButton("All in \(myPoints.formatted())") { await backend.bet(myPoints) }
                     .buttonStyle(PillButtonStyle(primary: false))
-                Button("Withdraw") { Task { await backend.withdraw() } }
+                AsyncButton("Withdraw") { await backend.withdraw() }
                     .buttonStyle(PillButtonStyle(primary: false))
             }
             .onAppear { amount = minBet }
             .onChange(of: round.highestBet) { amount = minBet }
         } else if round.bets[me] != nil {
-            waiting("You're in with \(round.bets[me] ?? 0). Waiting for the others…")
+            waiting("You're in with \((round.bets[me] ?? 0).formatted()). Waiting for the others…", icon: "hourglass")
         } else if round.withdrawn.contains(me) {
-            waiting("You sat this one out.")
+            waiting("You sat this one out.", icon: "moon.zzz.fill")
         } else {
-            waiting("Look at your cards… your turn is coming.")
+            waiting("Look at your cards… your turn is coming.", icon: "eye.fill")
         }
     }
 
@@ -62,44 +68,57 @@ struct ActionPanel: View {
     @ViewBuilder private var deals: some View {
         if round.bossId == me {
             if round.offers.isEmpty {
-                waiting("You're the boss. Wait for offers, or reveal now.")
+                waiting("You're the boss. Wait for offers, or reveal now.", icon: "crown.fill")
             }
             ForEach(round.offers.sorted { $0.key < $1.key }, id: \.key) { uid, offer in
-                HStack {
-                    Text("\(room.name(of: uid)) asks \(offer)").font(Theme.body(16, .bold))
-                    Spacer()
-                    Button("No") { Task { await backend.answerOffer(from: uid, accept: false) } }
+                HStack(spacing: 10) {
+                    Blob(color: Theme.color(forSeat: room.seat(of: uid)), size: 36, mood: .surprised)
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text(room.name(of: uid)).font(Theme.body(15, .bold)).lineLimit(1)
+                        Text("asks \(offer.formatted())").font(Theme.body(14, .heavy)).opacity(0.7)
+                            .contentTransition(.numericText())
+                    }
+                    Spacer(minLength: 4)
+                    AsyncButton("No") { await backend.answerOffer(from: uid, accept: false) }
                         .buttonStyle(PillButtonStyle(primary: false)).frame(width: 70)
-                    Button("Deal") { Task { await backend.answerOffer(from: uid, accept: true) } }
+                    AsyncButton("Deal") { await backend.answerOffer(from: uid, accept: true) }
                         .buttonStyle(PillButtonStyle()).frame(width: 84)
                         .disabled(offer > round.dealRoom)
                 }
+                .padding(.leading, 8)
+                .transition(.move(edge: .leading).combined(with: .opacity))
             }
-            Button("Reveal!") { Task { await backend.reveal() } }
+            AsyncButton("Reveal!") { await backend.reveal() }
                 .buttonStyle(PillButtonStyle())
         } else if let deal = round.deals[me] {
-            waiting("Deal locked: you get \(deal) if \(room.name(of: round.bossId ?? "")) wins.")
+            waiting("Deal locked: you get \(deal.formatted()) if \(room.name(of: round.bossId ?? "")) wins.", icon: "lock.fill")
         } else if round.bets[me] != nil {
             if round.dealRoom >= Betting.step {
                 AmountPicker(amount: $amount, range: Betting.step...roundDown(round.dealRoom))
-                Button(round.offers[me] == nil ? "Offer to withdraw for \(amount)" : "Change offer to \(amount)") {
-                    Task { await backend.makeOffer(amount) }
+                AsyncButton(round.offers[me] == nil ? "Offer to withdraw for \(amount.formatted())" : "Change offer to \(amount.formatted())") {
+                    await backend.makeOffer(amount)
                 }
                 .buttonStyle(PillButtonStyle())
                 .onAppear { amount = min(max(amount, Betting.step), roundDown(round.dealRoom)) }
             } else {
-                waiting("No room left for deals. Get ready to reveal!")
+                waiting("No room left for deals. Get ready to reveal!", icon: "bolt.fill")
             }
         } else {
-            waiting("Watching the deals…")
+            waiting("Watching the deals…", icon: "eye.fill")
         }
     }
 
     private func roundDown(_ n: Int) -> Int { max(Betting.step, n / Betting.step * Betting.step) }
 
-    private func waiting(_ text: String) -> some View {
-        Text(text).font(Theme.body(16, .semibold)).multilineTextAlignment(.center)
-            .frame(maxWidth: .infinity).padding(.vertical, 10)
+    private func waiting(_ text: String, icon: String) -> some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 22, weight: .bold))
+                .symbolEffect(.pulse, options: .repeating)
+            Text(text).font(Theme.body(16, .semibold)).multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity).padding(.vertical, 10)
+        .transition(.opacity)
     }
 }
 
@@ -112,7 +131,7 @@ private struct AmountPicker: View {
         HStack {
             stepButton("minus") { amount = max(range.lowerBound, amount - Betting.step) }
                 .disabled(amount <= range.lowerBound)
-            Text("\(amount)")
+            Text(amount.formatted())
                 .font(.system(size: 34, weight: .black, design: .rounded).monospacedDigit())
                 .frame(maxWidth: .infinity)
                 .contentTransition(.numericText())
@@ -121,14 +140,15 @@ private struct AmountPicker: View {
         }
         .onAppear { amount = min(max(amount, range.lowerBound), range.upperBound) }
         .animation(.snappy, value: amount)
+        .sensoryFeedback(.selection, trigger: amount)
     }
 
     private func stepButton(_ icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: icon).font(.system(size: 22, weight: .heavy))
-                .frame(width: 56, height: 56)
-                .background(Circle().fill(.white))
+            Image(systemName: icon)
         }
-        .foregroundStyle(Theme.ink)
+        .buttonStyle(CircleButtonStyle(size: 56))
+        .buttonRepeatBehavior(.enabled)
+
     }
 }
