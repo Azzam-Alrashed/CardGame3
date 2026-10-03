@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1226 520" width="1226" height="520">
+  <defs>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+  <rect width="1226" height="520" fill="#FFFFFF"/>
+  <g transform="translate(20 40) scale(0.86)">
+  <g transform="translate(256 466)" filter="url(#soft)">
+    <g transform="rotate(-24)"><rect x="-75" y="-340" width="150" height="210" rx="20" fill="#FFFFFF" stroke="#121214" stroke-width="7"/><text x="-56" y="-284" font-family="'Arial Rounded MT Bold', ArialRoundedMTBold, Nunito, 'Varela Round', sans-serif" font-weight="700" font-size="50" fill="#121214">A</text><g transform="translate(-38 -250) scale(30)" fill="#121214"><path d="M-0.22 -0.24 a0.22 0.22 0 1 0 0.44 0 a0.22 0.22 0 1 0 -0.44 0 Z"/><path d="M-0.46 0.1 a0.22 0.22 0 1 0 0.44 0 a0.22 0.22 0 1 0 -0.44 0 Z"/><path d="M0.02 0.1 a0.22 0.22 0 1 0 0.44 0 a0.22 0.22 0 1 0 -0.44 0 Z"/><path d="M-0.07 0 L0.07 0 L0.16 0.5 L-0.16 0.5 Z"/></g></g>
+    <g transform="rotate(-8)"><rect x="-75" y="-340" width="150" height="210" rx="20" fill="#FFFFFF" stroke="#121214" stroke-width="7"/><text x="-56" y="-284" font-family="'Arial Rounded MT Bold', ArialRoundedMTBold, Nunito, 'Varela Round', sans-serif" font-weight="700" font-size="50" fill="#FF618F">A</text><g transform="translate(-38 -250) scale(30)" fill="#FF618F"><path d="M0 -0.5 C0.12 -0.3 0.26 -0.14 0.38 0 C0.26 0.14 0.12 0.3 0 0.5 C-0.12 0.3 -0.26 0.14 -0.38 0 C-0.26 -0.14 -0.12 -0.3 0 -0.5 Z"/></g></g>
+    <g transform="rotate(8)"><rect x="-75" y="-340" width="150" height="210" rx="20" fill="#FFFFFF" stroke="#121214" stroke-width="7"/><text x="-56" y="-284" font-family="'Arial Rounded MT Bold', ArialRoundedMTBold, Nunito, 'Varela Round', sans-serif" font-weight="700" font-size="50" fill="#FF618F">A</text><g transform="translate(-38 -250) scale(30)" fill="#FF618F"><path d="M0 0.46 C-0.3 0.22 -0.5 0.02 -0.5 -0.2 C-0.5 -0.4 -0.34 -0.5 -0.22 -0.5 C-0.1 -0.5 -0.02 -0.42 0 -0.32 C0.02 -0.42 0.1 -0.5 0.22 -0.5 C0.34 -0.5 0.5 -0.4 0.5 -0.2 C0.5 0.02 0.3 0.22 0 0.46 Z"/></g></g>
+    <g transform="rotate(24)"><rect x="-75" y="-340" width="150" height="210" rx="20" fill="#FFFFFF" stroke="#121214" stroke-width="7"/><text x="-56" y="-284" font-family="'Arial Rounded MT Bold', ArialRoundedMTBold, Nunito, 'Varela Round', sans-serif" font-weight="700" font-size="50" fill="#121214">A</text><g transform="translate(-38 -250) scale(30)" fill="#121214"><path d="M0 -0.5 C-0.42 -0.16 -0.52 0.06 -0.38 0.22 C-0.26 0.34 -0.1 0.3 -0.05 0.2 L-0.15 0.5 L0.15 0.5 L0.05 0.2 C0.1 0.3 0.26 0.34 0.38 0.22 C0.52 0.06 0.42 -0.16 0 -0.5 Z"/></g><g transform="translate(8 -212) scale(80)" fill="#121214"><path d="M0 -0.5 C-0.42 -0.16 -0.52 0.06 -0.38 0.22 C-0.26 0.34 -0.1 0.3 -0.05 0.2 L-0.15 0.5 L0.15 0.5 L0.05 0.2 C0.1 0.3 0.26 0.34 0.38 0.22 C0.52 0.06 0.42 -0.16 0 -0.5 Z"/></g></g>
+  </g>
+  </g>
+  <g transform="translate(350 50) rotate(-8)">
+    <path d="M0 40 Q0 0 50 0 L140 0 Q190 0 190 40 Q190 80 140 80 L64 80 L30 106 L40 78 Q0 74 0 40 Z" fill="#111111"/>
+    <text x="95" y="56" text-anchor="middle" font-family="Geeza Pro, Noto Sans Arabic, sans-serif" font-weight="700" font-size="40" fill="#FFFFFF">مداقش!</text>
+  </g>
+  <text x="456" y="360" font-family="'Arial Rounded MT Bold', ArialRoundedMTBold, Nunito, 'Varela Round', sans-serif" font-weight="800" font-size="128" letter-spacing="-4" fill="#121214">CardGame3</text>
+</svg>
