@@ -1,0 +1,22 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "Name under the app icon",
+      "extractionState" : "manual",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "مداقش" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Muda" } }
+      }
+    },
+    "CFBundleName" : {
+      "comment" : "Short app name",
+      "extractionState" : "manual",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "مداقش" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Muda" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -1,7 +1,8 @@
 # App Store listing — paste into App Store Connect
 
 ## App Information
-- **Name:** مداقش
+- **Name (English):** Muda | fun & simple card game
+- **Name (Arabic localization):** مداقش | لعبة ورق ممتعة وبسيطة
 - **Subtitle (30):** Bet, deal & reveal with friends
 - **Primary category:** Games → Card · **Secondary:** Games → Board (avoid Casino; it raises the age rating)
 - **Content rights:** No third-party content
@@ -15,7 +16,7 @@
 Gather 4–13 friends, bet your points, cut deals with the boss, and reveal. No friends around? Fill the table with AI players.
 
 ## Description
-مداقش is the poker-style card game we've played with friends for years, now on your phone.
+Muda (مداقش) is the poker-style card game we've played with friends for years, now on your phone.
 
 Everyone joins a room with a 4-letter code and plays from their own phone. You get 4 cards. Bet to enter or sit the round out. The highest bettor becomes the boss — and everyone else can offer to step aside for a cut of the boss's winnings. Accept, reject, bluff. Then the boss reveals, and the best hand takes it.
 

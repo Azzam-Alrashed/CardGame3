@@ -1,8 +1,8 @@
-# مداقش (CardGame3) — Privacy Policy
+# Muda (مداقش) — Privacy Policy
 
 _Last updated: October 5, 2026_
 
-مداقش is a card game you play with friends. We collect as little as possible.
+Muda (مداقش) is a card game you play with friends. We collect as little as possible.
 
 ## What we collect
 - **An anonymous account ID.** The app signs you in anonymously with Firebase Authentication. We never ask for your email, phone number, or real identity.

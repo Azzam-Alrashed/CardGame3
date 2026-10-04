@@ -35,6 +35,7 @@
 		F4E51F723089D2A0BBDC7358 /* GameOverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C366499AFE220F6BD2CCF79 /* GameOverView.swift */; };
 		FC7024DB3868843DB4D0D15A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 183CE432C22D8FBE40FCB2BD /* GoogleService-Info.plist */; };
 		A1C0FFEE00000000000000B1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE00000000000000F1 /* PrivacyInfo.xcprivacy */; };
+		A1C0FFEE00000000000000B2 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE00000000000000F2 /* InfoPlist.xcstrings */; };
 		FE0069AEE0F332F6244A099E /* Backend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B2080C0FFCEE366B01966A /* Backend.swift */; };
 /* End PBXBuildFile section */
 
@@ -44,6 +45,7 @@
 		18126C2AFF222828E0F7C23E /* Room.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Room.swift; sourceTree = "<group>"; };
 		183CE432C22D8FBE40FCB2BD /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		A1C0FFEE00000000000000F1 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A1C0FFEE00000000000000F2 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		1DA4AA556A4D5AAF44BA3BA2 /* Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatting.swift; sourceTree = "<group>"; };
 		219EFDA9FEB32CA9AAB644C8 /* Round.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Round.swift; sourceTree = "<group>"; };
 		2C366499AFE220F6BD2CCF79 /* GameOverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameOverView.swift; sourceTree = "<group>"; };
@@ -171,6 +173,7 @@
 				93B3DF1B9A5F2E9EBD1F7365 /* Assets.xcassets */,
 				183CE432C22D8FBE40FCB2BD /* GoogleService-Info.plist */,
 				A1C0FFEE00000000000000F1 /* PrivacyInfo.xcprivacy */,
+				A1C0FFEE00000000000000F2 /* InfoPlist.xcstrings */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -251,6 +254,7 @@
 			knownRegions = (
 				Base,
 				en,
+				ar,
 			);
 			mainGroup = 0E776CE983D1957813522401;
 			minimizedProjectReferenceProxies = 1;
@@ -275,6 +279,7 @@
 				E42B790773AC29CDED87FF17 /* Assets.xcassets in Resources */,
 				FC7024DB3868843DB4D0D15A /* GoogleService-Info.plist in Resources */,
 				A1C0FFEE00000000000000B1 /* PrivacyInfo.xcprivacy in Resources */,
+				A1C0FFEE00000000000000B2 /* InfoPlist.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -322,7 +327,7 @@
 				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 6QYT6GJB4Z;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "مداقش";
+				INFOPLIST_KEY_CFBundleDisplayName = Muda;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.card-games";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -410,7 +415,7 @@
 				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 6QYT6GJB4Z;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "مداقش";
+				INFOPLIST_KEY_CFBundleDisplayName = Muda;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.card-games";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
