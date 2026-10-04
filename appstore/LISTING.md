@@ -11,6 +11,7 @@
 ## URLs
 - **Privacy Policy URL:** https://github.com/Azzam-Alrashed/CardGame3/blob/main/PRIVACY.md
 - **Support URL:** https://github.com/Azzam-Alrashed/CardGame3/issues
+- **Marketing URL:** https://azzam-alrashed.github.io/CardGame3/
 
 ## Promotional text (170)
 Gather 4–13 friends, bet your points, cut deals with the boss, and reveal. No friends around? Fill the table with AI players.
