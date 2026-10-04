@@ -14,8 +14,6 @@ describe.skipIf(!onEmulator)("away players and bots", () => {
   beforeAll(() => {
     if (!getApps().length) initializeApp({ projectId: "cardgame-3" });
     db = getFirestore();
-    play.botTiming.minMs = 0;
-    play.botTiming.maxMs = 0;
   });
 
   const room = async () => (await db.doc(`rooms/${code}`).get()).data()!;
