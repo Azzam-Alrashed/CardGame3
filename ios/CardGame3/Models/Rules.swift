@@ -9,4 +9,6 @@ enum TableSize {
 enum Betting {
     static let step = 500
     static let minBet = 500
+    /// Length of a betting turn before a bot takes the seat.
+    static let turnSeconds = 45.0
 }

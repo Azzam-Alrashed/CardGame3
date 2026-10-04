@@ -1,4 +1,4 @@
-// Keeps games moving without anyone tapping: bot moves, the deals timer, and stalled rooms.
+// Keeps games moving without anyone tapping: bot moves, timers, the next round, and stalled rooms.
 //
 // Every write saves `wakeAt` on the room: when it next needs attention. `waker.wake` asks Cloud Tasks
 // to run `tick` at that time; `tick` does one due thing and schedules the next. A sweeper runs every
@@ -9,8 +9,8 @@ import { getFunctions } from "firebase-admin/functions";
 import { logger } from "firebase-functions/v2";
 import * as engine from "./engine/round.js";
 import type { Room } from "./rooms.js";
-import { PrivateRound, applyBotAction, clock, dueAction, wakeTime } from "./schedule.js";
-import { privateRef, roomRef, writeRound } from "./store.js";
+import { PrivateRound, applyBotAction, awayFields, clock, dueAction, nextBotAction, wakeTime } from "./schedule.js";
+import { advanceTable, privateRef, roomRef, writeRound } from "./store.js";
 import { REGION } from "./util.js";
 
 /** A missed wake-up older than this is picked up by the sweeper. */
@@ -40,7 +40,7 @@ export const waker = {
 };
 
 /**
- * Does the one thing that is due in this room (a timer or a bot move), if any.
+ * Does the one thing that is due in this room (a timer, the next round, or a bot move), if any.
  * Returns when the room next needs attention, or null.
  */
 export async function tick(db: Firestore, code: string): Promise<number | null> {
@@ -63,11 +63,19 @@ export async function tick(db: Firestore, code: string): Promise<number | null> 
       return at;
     }
 
+    if (due.kind === "nextRound") return advanceTable(tx, ref, room, priv.state, now);
+
     let botOffers = priv.botOffers ?? {};
     let state;
+    let roomFields: Partial<Room> = {};
     try {
       if (due.kind === "timeUp") {
         state = engine.timeUp(priv.state);
+      } else if (due.kind === "turnTimeout") {
+        // Out of time: a bot takes the seat (like stepping away) and plays this turn right away.
+        roomFields = awayFields(room, due.id, true);
+        const action = nextBotAction({ ...room, ...roomFields }, priv.state, botOffers);
+        state = action ? applyBotAction(priv.state, action) : priv.state;
       } else {
         state = applyBotAction(priv.state, due.action);
         if (due.action.kind === "offer") botOffers = { ...botOffers, [due.action.id]: (botOffers[due.action.id] ?? 0) + 1 };
@@ -81,7 +89,7 @@ export async function tick(db: Firestore, code: string): Promise<number | null> 
       tx.update(ref, { wakeAt: at });
       return at;
     }
-    return writeRound(tx, ref, room, priv, state, now, {}, { botOffers });
+    return writeRound(tx, ref, room, priv, state, now, roomFields, { botOffers });
   });
 }
 

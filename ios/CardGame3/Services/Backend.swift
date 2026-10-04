@@ -126,7 +126,15 @@ final class Backend {
         }
     }
 
-    /// Take your seat back from the bot.
+    /// At the table while a bot plays your seat (your turn ran out): take it back.
+    func takeSeatBack() async {
+        guard let code = room?.code else { return }
+        await run {
+            _ = try await functions.httpsCallable("setAway").call(["code": code, "away": false])
+        }
+    }
+
+    /// Back from Home: take your seat back from the bot.
     func returnToGame() async {
         guard let code = awayRoomCode else { return }
         await run {

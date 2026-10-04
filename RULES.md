@@ -13,6 +13,7 @@
 - To enter you must beat the highest bet so far, or go all in
 - Everyone can see who entered and how much they bet
 - If someone goes all in with exactly the highest bet, that later player becomes the boss
+- Each betting turn has 45 seconds; when it runs out, a bot plays your seat until you take it back
 
 ## Deals (before reveal)
 - The highest bettor is the boss of the round (if tied, the latest one to reach it)
@@ -47,6 +48,7 @@
 - The dealer role passes one seat to the right each round
 - When players are knocked out, the deck shrinks to match the players who are left
 - If everyone withdraws, the cards are reshuffled and the next dealer deals
+- The next round is dealt automatically a few seconds after the result
 
 ## End of game
 - The game ends when fewer than 4 players remain

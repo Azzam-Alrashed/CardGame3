@@ -45,7 +45,13 @@ private struct PlayerChip: View {
                     hair: round.bossId == uid
                 )
                 .background { if isTurn { TurnPulse() } }
-                .overlay(Circle().strokeBorder(.white, lineWidth: isTurn ? 4 : 0))
+                .overlay {
+                    if isTurn, let deadline = round.turnDeadlineDate {
+                        TurnClockRing(deadline: deadline)
+                    } else {
+                        Circle().strokeBorder(.white, lineWidth: isTurn ? 4 : 0)
+                    }
+                }
                 .scaleEffect(isTurn ? 1.08 : 1)
                 if room.isAway(uid) || room.isAI(uid) {
                     Text("🤖").font(.system(size: 16))
@@ -101,6 +107,22 @@ private struct PlayerChip: View {
             .background(Capsule().fill(dark ? Theme.ink : .white))
             .foregroundStyle(dark ? .white : Theme.ink)
             .contentTransition(.numericText())
+    }
+}
+
+/// The turn's time left, as a ring that empties clockwise and turns pink for the last 10 seconds.
+private struct TurnClockRing: View {
+    var deadline: Date
+
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 0.1)) { context in
+            let left = max(0, deadline.timeIntervalSince(context.date))
+            Circle()
+                .trim(from: 0, to: min(1, left / Betting.turnSeconds))
+                .stroke(left <= 10 ? Theme.hotPink : .white, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .padding(2)
+        }
     }
 }
 

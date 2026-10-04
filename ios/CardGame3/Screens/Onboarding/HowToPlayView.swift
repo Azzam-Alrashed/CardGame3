@@ -15,6 +15,7 @@ struct HowToPlayView: View {
             "Enter by betting, or withdraw for free and sit out this round.",
             "Bets go up in steps of 500, starting at 500. You must beat the highest bet so far, or go all in.",
             "The highest bettor is the boss. On a tie, the latest one to reach it.",
+            "You have 45 seconds per turn. If time runs out, a bot plays your seat until you take it back.",
         ]),
         ("Deals", [
             "Before the reveal, others can offer to withdraw in return for some of the boss's winnings.",
@@ -37,6 +38,7 @@ struct HowToPlayView: View {
             "The dealer passes one seat to the right.",
             "As players are knocked out, the deck shrinks to match.",
             "If everyone withdraws, the cards are reshuffled and the next dealer deals.",
+            "The next round is dealt automatically a few seconds after the result.",
         ]),
         ("End of game", [
             "The game ends when fewer than 4 players remain. Most points wins.",
