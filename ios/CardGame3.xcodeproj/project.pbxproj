@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		00212DF979FD95393726D2A6 /* Controls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FC696ACAC3652E0C8506740 /* Controls.swift */; };
+		0B0A4D1E5C6F7A8B9C0D1E31 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B0A4D1E5C6F7A8B9C0D1E30 /* OnboardingView.swift */; };
+		0B0A4D1E5C6F7A8B9C0D1E33 /* HowToPlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B0A4D1E5C6F7A8B9C0D1E32 /* HowToPlayView.swift */; };
 		0F2FC0DEFC1B8EA4B0ECF08E /* AdaptiveSplit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30251E8A644CE59D006203CF /* AdaptiveSplit.swift */; };
 		12A2FF1B3AD3FB682D40F10B /* CardGame3App.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6B9D3D4DCACCC6EFC7A676C /* CardGame3App.swift */; };
 		1BE66EFD0D4DF8C43F85DE75 /* Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DA4AA556A4D5AAF44BA3BA2 /* Formatting.swift */; };
@@ -32,14 +34,16 @@
 		F1AA55639FA0FD270F3AF635 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A06A6AD5F067878B6246E595 /* RootView.swift */; };
 		F4E51F723089D2A0BBDC7358 /* GameOverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C366499AFE220F6BD2CCF79 /* GameOverView.swift */; };
 		FC7024DB3868843DB4D0D15A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 183CE432C22D8FBE40FCB2BD /* GoogleService-Info.plist */; };
+		A1C0FFEE00000000000000B1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE00000000000000F1 /* PrivacyInfo.xcprivacy */; };
 		FE0069AEE0F332F6244A099E /* Backend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B2080C0FFCEE366B01966A /* Backend.swift */; };
-		0B0A4D1E5C6F7A8B9C0D1E31 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B0A4D1E5C6F7A8B9C0D1E30 /* OnboardingView.swift */; };
-		0B0A4D1E5C6F7A8B9C0D1E33 /* HowToPlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B0A4D1E5C6F7A8B9C0D1E32 /* HowToPlayView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0B0A4D1E5C6F7A8B9C0D1E30 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		0B0A4D1E5C6F7A8B9C0D1E32 /* HowToPlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToPlayView.swift; sourceTree = "<group>"; };
 		18126C2AFF222828E0F7C23E /* Room.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Room.swift; sourceTree = "<group>"; };
 		183CE432C22D8FBE40FCB2BD /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		A1C0FFEE00000000000000F1 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		1DA4AA556A4D5AAF44BA3BA2 /* Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatting.swift; sourceTree = "<group>"; };
 		219EFDA9FEB32CA9AAB644C8 /* Round.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Round.swift; sourceTree = "<group>"; };
 		2C366499AFE220F6BD2CCF79 /* GameOverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameOverView.swift; sourceTree = "<group>"; };
@@ -62,8 +66,6 @@
 		F419F18835418FA4DC00D6E5 /* Blob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Blob.swift; sourceTree = "<group>"; };
 		F934401FEB674959E15E4F60 /* MyHand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyHand.swift; sourceTree = "<group>"; };
 		FEAE8337DFD8DA0B5C611C40 /* PlayingCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayingCard.swift; sourceTree = "<group>"; };
-		0B0A4D1E5C6F7A8B9C0D1E30 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
-		0B0A4D1E5C6F7A8B9C0D1E32 /* HowToPlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToPlayView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -80,6 +82,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0B0A4D1E5C6F7A8B9C0D1E2F /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				0B0A4D1E5C6F7A8B9C0D1E32 /* HowToPlayView.swift */,
+				0B0A4D1E5C6F7A8B9C0D1E30 /* OnboardingView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
 		0E776CE983D1957813522401 = {
 			isa = PBXGroup;
 			children = (
@@ -159,6 +170,7 @@
 			children = (
 				93B3DF1B9A5F2E9EBD1F7365 /* Assets.xcassets */,
 				183CE432C22D8FBE40FCB2BD /* GoogleService-Info.plist */,
+				A1C0FFEE00000000000000F1 /* PrivacyInfo.xcprivacy */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -197,15 +209,6 @@
 				0B0A4D1E5C6F7A8B9C0D1E2F /* Onboarding */,
 			);
 			path = Screens;
-			sourceTree = "<group>";
-		};
-		0B0A4D1E5C6F7A8B9C0D1E2F /* Onboarding */ = {
-			isa = PBXGroup;
-			children = (
-				0B0A4D1E5C6F7A8B9C0D1E32 /* HowToPlayView.swift */,
-				0B0A4D1E5C6F7A8B9C0D1E30 /* OnboardingView.swift */,
-			);
-			path = Onboarding;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -271,6 +274,7 @@
 			files = (
 				E42B790773AC29CDED87FF17 /* Assets.xcassets in Resources */,
 				FC7024DB3868843DB4D0D15A /* GoogleService-Info.plist in Resources */,
+				A1C0FFEE00000000000000B1 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -315,19 +319,19 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 6QYT6GJB4Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "مداقش";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.card-games";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.card-games";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.azzamalrashed.cardgame3;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
@@ -403,19 +407,19 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 6QYT6GJB4Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "مداقش";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.card-games";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.card-games";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.1;
+				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.azzamalrashed.cardgame3;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
