@@ -45,8 +45,9 @@ struct LobbyView: View {
             }
             .padding(.top, 16)
 
+            GeometryReader { geo in
             ScrollView {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 12)], spacing: 18) {
+                LazyVGrid(columns: columns(count: room.players.count, width: geo.size.width), spacing: 18) {
                     ForEach(Array(room.players.enumerated()), id: \.element.id) { index, player in
                         PlayerBadge(
                             name: player.name,
@@ -60,7 +61,11 @@ struct LobbyView: View {
                     }
                 }
                 .padding(24)
+                // Centered in the space, instead of one long row on wide screens.
+                .frame(maxWidth: .infinity, minHeight: geo.size.height)
                 .animation(.spring(duration: 0.5, bounce: 0.45), value: room.players)
+            }
+            .scrollBounceBehavior(.basedOnSize)
             }
             .sensoryFeedback(.impact(weight: .light), trigger: room.players.count)
             .frame(maxHeight: .infinity)
@@ -101,6 +106,12 @@ struct LobbyView: View {
           }
         }
         }
+    }
+
+    /// Only as many columns as there are players (at most 5), so the badges stay centered.
+    private func columns(count: Int, width: CGFloat) -> [GridItem] {
+        let fit = Int((width - 48 + 12) / (100 + 12))
+        return Array(repeating: GridItem(.fixed(100), spacing: 12), count: max(1, min(count, fit, 5)))
     }
 
     private func startLabel(_ room: Room) -> String {

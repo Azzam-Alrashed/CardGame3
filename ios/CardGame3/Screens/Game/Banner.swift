@@ -117,6 +117,9 @@ private struct ResultSummary: View {
                 .padding(.horizontal, 12)
             }
         }
+        // Keeps rows readable on iPad and leaves room for the winner's crown and lift.
+        .frame(maxWidth: 560)
+        .padding(.horizontal, 6)
     }
 
     private func headline(_ result: RoundResult) -> String {
