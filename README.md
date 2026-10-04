@@ -4,6 +4,8 @@ An app for playing مداقش, the poker-style card game we play with friends. E
 
 <p align="center"><img src="assets/logo.svg" width="160" alt="CardGame3 logo"></p>
 
+**Website:** [azzam-alrashed.github.io/CardGame3](https://azzam-alrashed.github.io/CardGame3/), a landing page served by GitHub Pages from [`docs/`](docs/).
+
 ## How the game works
 
 - 4 to 13 players. The deck uses only the top ranks, one rank per player, and everyone gets 4 cards.
@@ -30,6 +32,7 @@ The full rules are in **[RULES.md](RULES.md)**.
 | `firebase/firestore.rules` | Security rules: players see only their own room and their own cards |
 | `ios/` | iOS app in SwiftUI (`CardGame3.xcodeproj`) |
 | `assets/` | Logo and wordmark |
+| `docs/` | Landing page for GitHub Pages: one static `index.html` plus images in `docs/img/` |
 | `android/` | Android app in Kotlin *(coming soon)* |
 
 Tech choices are explained in **[TECH_STACK.md](TECH_STACK.md)**.
