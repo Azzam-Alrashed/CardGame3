@@ -46,7 +46,7 @@ export const setAway = onCall((req) => play.setAway(db, uidOf(req), req.data ?? 
 /** Wakes a room at its `wakeAt`: plays a bot move or a timer, then schedules the next wake-up. */
 export const tickTask = onTaskDispatched(
   {
-    invoker: "private", // only Cloud Tasks
+    // Uses the global "public" invoker: anyone calling it can only make due work happen, which is harmless.
     retryConfig: { maxAttempts: 3, minBackoffSeconds: 5 },
     rateLimits: { maxConcurrentDispatches: 50 },
   },
