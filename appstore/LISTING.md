@@ -13,6 +13,14 @@
 - **Support URL:** https://github.com/Azzam-Alrashed/CardGame3/issues
 - **Marketing URL:** https://azzam-alrashed.github.io/CardGame3/
 
+## What's New in 1.1
+- Play again: one tap after a game starts a rematch with the same players.
+- No more waiting: 45 seconds per betting turn, and the next round deals itself.
+- Bots now play in the background, so the game moves even when phones are closed.
+- See your hand's name ("Pair of Queens") under your cards and in the results.
+- Rules are one tap away during a game.
+- Long-press a player to report or hide their name.
+
 ## Promotional text (170)
 Gather 4–13 friends, bet your points, cut deals with the boss, and reveal. No friends around? Fill the table with AI players.
 

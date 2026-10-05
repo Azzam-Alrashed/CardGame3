@@ -18,6 +18,7 @@
 		48378A984058994AA9DD008B /* Room.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18126C2AFF222828E0F7C23E /* Room.swift */; };
 		70E9735CA1F8491CFCC69A63 /* PlayingCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEAE8337DFD8DA0B5C611C40 /* PlayingCard.swift */; };
 		77A4C5A5F9E8D6EC2B798240 /* Round.swift in Sources */ = {isa = PBXBuildFile; fileRef = 219EFDA9FEB32CA9AAB644C8 /* Round.swift */; };
+		A1C0FFEE00000000000000B4 /* Hand.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE00000000000000F4 /* Hand.swift */; };
 		82DBE133A8B3A5AFD4C556F4 /* Blob.swift in Sources */ = {isa = PBXBuildFile; fileRef = F419F18835418FA4DC00D6E5 /* Blob.swift */; };
 		854ADF78BD4447F85BE1DF7F /* PlayersStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EC955BCD2C924B7BE292978 /* PlayersStrip.swift */; };
 		A1C0FFEE00000000000000B3 /* PlayerMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE00000000000000F3 /* PlayerMenu.swift */; };
@@ -49,6 +50,7 @@
 		A1C0FFEE00000000000000F2 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		1DA4AA556A4D5AAF44BA3BA2 /* Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatting.swift; sourceTree = "<group>"; };
 		219EFDA9FEB32CA9AAB644C8 /* Round.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Round.swift; sourceTree = "<group>"; };
+		A1C0FFEE00000000000000F4 /* Hand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hand.swift; sourceTree = "<group>"; };
 		2C366499AFE220F6BD2CCF79 /* GameOverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameOverView.swift; sourceTree = "<group>"; };
 		30251E8A644CE59D006203CF /* AdaptiveSplit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveSplit.swift; sourceTree = "<group>"; };
 		4EC955BCD2C924B7BE292978 /* PlayersStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayersStrip.swift; sourceTree = "<group>"; };
@@ -151,6 +153,7 @@
 			children = (
 				18126C2AFF222828E0F7C23E /* Room.swift */,
 				219EFDA9FEB32CA9AAB644C8 /* Round.swift */,
+				A1C0FFEE00000000000000F4 /* Hand.swift */,
 				52913B1B8495B55869C9E67F /* Rules.swift */,
 			);
 			path = Models;
@@ -314,6 +317,7 @@
 				48378A984058994AA9DD008B /* Room.swift in Sources */,
 				F1AA55639FA0FD270F3AF635 /* RootView.swift in Sources */,
 				77A4C5A5F9E8D6EC2B798240 /* Round.swift in Sources */,
+				A1C0FFEE00000000000000B4 /* Hand.swift in Sources */,
 				1E339EBCEB8DCC6F0A51EB9C /* Rules.swift in Sources */,
 				EAF8E06AA89BEC384291C69E /* SpeechBubble.swift in Sources */,
 				F06DC7AD9F8DA8FE5D2F42CD /* Theme.swift in Sources */,
@@ -328,7 +332,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 6QYT6GJB4Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Muda;
@@ -340,7 +344,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.azzamalrashed.cardgame3;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
@@ -416,7 +420,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 6QYT6GJB4Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Muda;
@@ -428,7 +432,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.azzamalrashed.cardgame3;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;

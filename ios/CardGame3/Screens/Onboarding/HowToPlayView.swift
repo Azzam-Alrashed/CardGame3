@@ -1,8 +1,9 @@
 import SwiftUI
 
-/// The full house rules, opened from the "?" on the home screen.
+/// The full house rules, opened from the "?" on the home screen and at the table.
 struct HowToPlayView: View {
-    var onReplayIntro: () -> Void
+    /// Offers "Replay the intro" (home screen only).
+    var onReplayIntro: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
 
     private let sections: [(String, [String])] = [
@@ -67,12 +68,14 @@ struct HowToPlayView: View {
                             }
                         }
                     }
-                    Button("Replay the intro") {
-                        dismiss()
-                        onReplayIntro()
+                    if let onReplayIntro {
+                        Button("Replay the intro") {
+                            dismiss()
+                            onReplayIntro()
+                        }
+                        .buttonStyle(PillButtonStyle(primary: false))
+                        .padding(.top, 8)
                     }
-                    .buttonStyle(PillButtonStyle(primary: false))
-                    .padding(.top, 8)
                     Link("Contact us", destination: URL(string: "mailto:azzam.rar@gmail.com?subject=Muda")!)
                         .buttonStyle(PillButtonStyle(primary: false))
                 }

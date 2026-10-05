@@ -104,6 +104,7 @@ private struct PlayerChip: View {
         Text(text)
             .font(Theme.body(11, .heavy))
             .lineLimit(1)
+            .minimumScaleFactor(0.7) // "Boss 3.5K" fits the chip
             .padding(.horizontal, 8).padding(.vertical, 3)
             .background(Capsule().fill(dark ? Theme.ink : .white))
             .foregroundStyle(dark ? .white : Theme.ink)
