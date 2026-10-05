@@ -111,7 +111,7 @@ To install on your iPhone, select it as the device and set your **Team** under S
 - [x] Onboarding and How to play
 - [x] Leave mid-game, with a bot playing your seat
 - [x] AI players added by the host
-- [x] 1.1: bots and timers on the server, turn timer, rematch, reporting, hand names
+- [x] 0.1: bots and timers on the server, turn timer, rematch, reporting, hand names
 - [ ] Share with friends through TestFlight
 - [ ] Android app
 

@@ -13,7 +13,7 @@
 - **Support URL:** https://github.com/Azzam-Alrashed/CardGame3/issues
 - **Marketing URL:** https://azzam-alrashed.github.io/CardGame3/
 
-## What's New in 1.1
+## What's New in 0.1
 - Play again: one tap after a game starts a rematch with the same players.
 - No more waiting: 45 seconds per betting turn, and the next round deals itself.
 - Bots now play in the background, so the game moves even when phones are closed.
