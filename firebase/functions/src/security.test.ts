@@ -50,6 +50,15 @@ describe.skipIf(!onEmulator)("security rules", () => {
     await assertFails(getDoc(doc(as("alice"), "rooms/ABCD/private/round")));
   });
 
+  it("reports are server-only: players can't read or file them directly", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "reports/alice_bob"), { reporter: "alice", reported: "bob" });
+    });
+    await assertFails(getDoc(doc(as("alice"), "reports/alice_bob")));
+    await assertFails(getDoc(doc(as("bob"), "reports/alice_bob")));
+    await assertFails(setDoc(doc(as("alice"), "reports/alice_eve"), { reporter: "alice", reported: "eve" }));
+  });
+
   it("nobody can write anything directly", async () => {
     await assertFails(setDoc(doc(as("alice"), "rooms/ABCD"), { playerIds: ["alice"] }));
     await assertFails(setDoc(doc(as("alice"), "rooms/ABCD/hands/alice"), { cards: [] }));

@@ -30,6 +30,7 @@ export const addAiPlayer = onCall((req) => rooms.addAiPlayer(db, uidOf(req), req
 export const removeAiPlayer = onCall((req) => rooms.removeAiPlayer(db, uidOf(req), req.data ?? {}));
 export const removePlayer = onCall((req) => rooms.removePlayer(db, uidOf(req), req.data ?? {}));
 export const rematch = onCall((req) => rooms.rematch(db, uidOf(req), req.data ?? {}));
+export const reportPlayer = onCall((req) => rooms.reportPlayer(db, uidOf(req), req.data ?? {}));
 
 export const bet = onCall((req) => play.bet(db, uidOf(req), req.data ?? {}));
 export const withdraw = onCall((req) => play.withdraw(db, uidOf(req), req.data ?? {}));

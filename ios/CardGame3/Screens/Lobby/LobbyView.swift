@@ -50,13 +50,14 @@ struct LobbyView: View {
                 LazyVGrid(columns: columns(count: room.players.count, width: geo.size.width), spacing: 18) {
                     ForEach(Array(room.players.enumerated()), id: \.element.id) { index, player in
                         PlayerBadge(
-                            name: player.name,
+                            name: room.name(of: player.uid),
                             color: Theme.color(forSeat: index),
                             isHost: player.uid == room.hostId,
                             isYou: player.uid == backend.uid,
                             isAI: room.isAI(player.uid),
                             onRemove: backend.isHost && player.uid != room.hostId ? { removing = player } : nil
                         )
+                        .playerMenu(player.uid, in: room)
                         .transition(.scale(scale: 0.3).combined(with: .opacity))
                     }
                 }
@@ -71,7 +72,7 @@ struct LobbyView: View {
             .frame(maxHeight: .infinity)
           }
           .confirmationDialog(
-              "Remove \(removing?.name ?? "")?",
+              "Remove \(removing.map { room.name(of: $0.uid) } ?? "")?",
               isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } }),
               titleVisibility: .visible
           ) {

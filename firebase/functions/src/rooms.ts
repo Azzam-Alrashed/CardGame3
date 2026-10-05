@@ -7,6 +7,7 @@ import { HttpsError } from "firebase-functions/v2/https";
 import { MAX_PLAYERS, MIN_PLAYERS } from "./engine/cards.js";
 import { Table, newTable } from "./engine/game.js";
 import { BOT_STYLES, BotStyle } from "./engine/bot.js";
+import { isOffensive } from "./names.js";
 import { clock } from "./schedule.js";
 import { dealRound } from "./store.js";
 import { waker } from "./ticker.js";
@@ -59,6 +60,7 @@ export function cleanName(name: unknown): string {
   if (trimmed.length === 0 || trimmed.length > MAX_NAME_LENGTH) {
     throw new HttpsError("invalid-argument", `Name must be 1-${MAX_NAME_LENGTH} characters`);
   }
+  if (isOffensive(trimmed)) throw new HttpsError("invalid-argument", "Please choose a different name");
   return trimmed;
 }
 
@@ -279,4 +281,36 @@ export async function rematch(db: Firestore, uid: string, data: { code?: unknown
     return joinRoom(db, uid, { code: outcome.code, name: outcome.name });
   }
   throw new HttpsError("resource-exhausted", "Could not find a free room code, try again");
+}
+
+// MARK: Reports
+
+export const REPORT_REASONS = ["offensive", "impersonation", "other"] as const;
+
+/**
+ * Reports another player's name for review. Stored in `reports/{reporter}_{reported}`, which only
+ * the server and the Firebase console can read; reporting the same player again updates it.
+ */
+export async function reportPlayer(
+  db: Firestore, uid: string, data: { code?: unknown; playerId?: unknown; reason?: unknown },
+): Promise<void> {
+  const code = cleanCode(data.code);
+  const reason = REPORT_REASONS.find((r) => r === data.reason);
+  if (!reason) throw new HttpsError("invalid-argument", "Pick a reason");
+  const snap = await rooms(db).doc(code).get();
+  if (!snap.exists) throw new HttpsError("not-found", "No room with that code");
+  const room = snap.data() as Room;
+  if (!room.playerIds.includes(uid)) throw new HttpsError("permission-denied", "You are not in this room");
+  const reported = room.players.find((p) => p.uid === data.playerId);
+  if (!reported || reported.uid === uid || (room.aiPlayers ?? []).includes(reported.uid)) {
+    throw new HttpsError("invalid-argument", "That player can't be reported");
+  }
+  await db.collection("reports").doc(`${uid}_${reported.uid}`).set({
+    code,
+    reporter: uid,
+    reported: reported.uid,
+    name: reported.name,
+    reason,
+    at: clock.now(),
+  });
 }

@@ -1,4 +1,19 @@
 import Foundation
+import Observation
+
+/// Names this player hid on this phone (they show as "Player 3" everywhere). Kept across launches.
+@Observable
+final class HiddenNames {
+    static let shared = HiddenNames()
+    private(set) var ids = Set(UserDefaults.standard.stringArray(forKey: "hiddenNames") ?? [])
+
+    func contains(_ uid: String) -> Bool { ids.contains(uid) }
+
+    func set(_ uid: String, hidden: Bool) {
+        if hidden { ids.insert(uid) } else { ids.remove(uid) }
+        UserDefaults.standard.set(Array(ids), forKey: "hiddenNames")
+    }
+}
 
 /// Mirrors the public room document written by Cloud Functions (`rooms/{code}`).
 struct Room: Decodable, Equatable {
@@ -28,8 +43,10 @@ struct Room: Decodable, Equatable {
     let rematchCode: String?
     let rematchBy: String?
 
+    /// A player's name, or "Player 3" if it is hidden on this phone (see `HiddenNames`).
     func name(of uid: String) -> String {
-        players.first { $0.uid == uid }?.name ?? "?"
+        if HiddenNames.shared.contains(uid) { return "Player \(seat(of: uid) + 1)" }
+        return players.first { $0.uid == uid }?.name ?? "?"
     }
 
     /// Seat index in the joined order, used for each player's blob color.
