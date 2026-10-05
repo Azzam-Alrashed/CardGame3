@@ -18,8 +18,12 @@ The full rules are in **[RULES.md](RULES.md)**.
 - **Rooms with a 4-letter code.** Friends join from their own phones and see every move live.
 - **AI players.** The host can fill empty seats with AI players (up to 13 seats), or play solo against 3 of them.
 - **Step away anytime.** Leave a game in progress and a bot plays your seat until you tap **Back to game**.
+- **The table never stalls.** Each betting turn has 45 seconds; when it runs out, a bot takes the seat until you take it back. The next round is dealt on its own.
+- **Play again.** After a game, one tap opens a new lobby with the same AI players, and everyone else gets a **Join rematch** button.
 - **A bot that plays fair.** It sees only its own cards, works out its odds by dealing imaginary hands from the cards it hasn't seen, and bluffs now and then.
-- **First-launch onboarding** and a **How to play** sheet.
+- **Know your hand.** Your hand's name ("Pair of Queens") shows under your cards and next to every revealed hand.
+- **Safe names.** Offensive names are refused. Long-press any player to report their name or hide it on your phone.
+- **First-launch onboarding** and a **How to play** sheet, also available at the table.
 - **iPhone and iPad** in every orientation.
 
 ## Project layout
@@ -104,6 +108,7 @@ To install on your iPhone, select it as the device and set your **Team** under S
 - [x] Onboarding and How to play
 - [x] Leave mid-game, with a bot playing your seat
 - [x] AI players added by the host
+- [x] 1.1: bots and timers on the server, turn timer, rematch, reporting, hand names
 - [ ] Share with friends through TestFlight
 - [ ] Android app
 

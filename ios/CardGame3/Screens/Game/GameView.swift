@@ -4,6 +4,7 @@ import SwiftUI
 struct GameView: View {
     @Environment(Backend.self) private var backend
     @State private var confirmLeave = false
+    @State private var showRules = false
 
     var body: some View {
         // The room can disappear (leaving, "Back home") a frame before the screen switches.
@@ -60,6 +61,10 @@ struct GameView: View {
                 .contentTransition(.numericText())
                 .animation(.snappy, value: round.roundNumber)
             Spacer()
+            Button { showRules = true } label: { Image(systemName: "questionmark") }
+                .buttonStyle(CircleButtonStyle(size: 40))
+                .accessibilityLabel("How to play")
+                .sheet(isPresented: $showRules) { HowToPlayView() }
             if let uid = backend.uid {
                 Label(room.points(of: uid).formatted(), systemImage: "circle.hexagongrid.fill")
                     .font(Theme.body(17, .heavy).monospacedDigit())

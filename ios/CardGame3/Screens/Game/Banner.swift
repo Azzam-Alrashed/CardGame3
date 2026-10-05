@@ -89,9 +89,15 @@ private struct ResultSummary: View {
             }
             ForEach(Array(result.revealed.enumerated()), id: \.element) { row, uid in
                 HStack(spacing: 4) {
-                    Text(uid == me ? "You" : room.name(of: uid))
-                        .font(Theme.body(14, .bold)).frame(width: 64, alignment: .leading).lineLimit(1)
-                        .minimumScaleFactor(0.7)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(uid == me ? "You" : room.name(of: uid))
+                            .font(Theme.body(14, .bold))
+                        if let hand = HandValue(round.revealedHands[uid] ?? []) {
+                            Text(hand.name).font(Theme.body(11, .semibold)).opacity(0.7)
+                        }
+                    }
+                    .lineLimit(1).minimumScaleFactor(0.6)
+                    .frame(width: 76, alignment: .leading)
                     ForEach(Array((round.revealedHands[uid] ?? []).enumerated()), id: \.element) { i, card in
                         PlayingCard(rank: card.rank, suit: card.suit, width: 34)
                             .flipIn(delay: Double(row) * 0.25 + Double(i) * 0.06)

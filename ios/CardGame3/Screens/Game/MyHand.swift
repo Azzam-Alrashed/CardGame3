@@ -7,6 +7,23 @@ struct MyHand: View {
     @State private var lifted: Card?
 
     var body: some View {
+        VStack(spacing: 6) {
+            fan
+            // What you're holding, so nobody has to work out "two pairs" under pressure.
+            if let hand = HandValue(cards) {
+                Text(hand.name)
+                    .font(Theme.body(14, .heavy))
+                    .padding(.horizontal, 12).padding(.vertical, 5)
+                    .background(Capsule().fill(.white.opacity(0.85)))
+                    .contentTransition(.opacity)
+                    .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .padding(.bottom, 12)
+        .animation(.spring(duration: 0.4).delay(0.4), value: cards)
+    }
+
+    private var fan: some View {
         HStack(spacing: -24) {
             ForEach(Array(cards.enumerated()), id: \.element) { i, card in
                 PlayingCard(rank: card.rank, suit: card.suit, width: 84)
@@ -21,8 +38,8 @@ struct MyHand: View {
                     )
             }
         }
-        .padding(.bottom, 16)
-        .frame(minHeight: 84 * 1.4 + 16)
+        .padding(.bottom, 4)
+        .frame(minHeight: 84 * 1.4 + 4)
         .animation(.spring, value: cards)
         .sensoryFeedback(.impact(weight: .medium), trigger: cards) { old, new in old.isEmpty && !new.isEmpty }
         .onChange(of: cards) { lifted = nil }
