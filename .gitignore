@@ -1,3 +1,4 @@
 *.log
 .firebase/
 .DS_Store
+.claude/
