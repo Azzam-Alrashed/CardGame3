@@ -57,9 +57,10 @@ struct Room: Decodable, Equatable {
     }
 
     /// Points including the result of a just-finished round (the table updates at the next deal).
-    func points(of uid: String) -> Int {
+    /// `settled: false` leaves that result out while its showdown is still being revealed.
+    func points(of uid: String, settled: Bool = true) -> Int {
         let base = table?.seats.first { $0.id == uid }?.points ?? 0
-        return base + (round?.result?.deltas[uid] ?? 0)
+        return base + (settled ? round?.result?.deltas[uid] ?? 0 : 0)
     }
 
     func isAI(_ uid: String) -> Bool {

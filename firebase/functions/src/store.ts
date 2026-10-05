@@ -11,7 +11,7 @@ import { Table, isGameOver, nextTable } from "./engine/game.js";
 import * as engine from "./engine/round.js";
 import { RoundState } from "./engine/round.js";
 import type { Room } from "./rooms.js";
-import { PrivateRound, nextRoundAtFor, planBotMove, turnDeadlineFor, wakeTime } from "./schedule.js";
+import { PrivateRound, nextRoundAtFor, planBotMove, revealEndsAtFor, turnDeadlineFor, wakeTime } from "./schedule.js";
 import { secureRng } from "./util.js";
 
 /** What everyone at the table can see about the current round. */
@@ -32,13 +32,15 @@ export interface PublicRound {
   turnDeadline: number | null;
   /** Epoch ms when the next round is dealt (finished rounds only). */
   nextRoundAt: number | null;
+  /** Epoch ms when phones finish staging the showdown (finished rounds only); no dealing before then. */
+  revealEndsAt: number | null;
   result: engine.RoundResult | null;
   /** Cards of players who revealed (finished rounds only). */
   revealedHands: Record<string, Card[]>;
 }
 
 export function publicView(
-  state: RoundState, timers: Pick<PrivateRound, "deadline" | "turnDeadline" | "nextRoundAt">,
+  state: RoundState, timers: Pick<PrivateRound, "deadline" | "turnDeadline" | "nextRoundAt" | "revealEndsAt">,
 ): PublicRound {
   const revealed = state.result?.revealed ?? [];
   return {
@@ -54,6 +56,7 @@ export function publicView(
     deadline: timers.deadline,
     turnDeadline: timers.turnDeadline ?? null,
     nextRoundAt: timers.nextRoundAt ?? null,
+    revealEndsAt: timers.revealEndsAt ?? null,
     result: state.result,
     revealedHands: Object.fromEntries(
       state.players.filter((p) => revealed.includes(p.id)).map((p) => [p.id, p.hand]),
@@ -93,6 +96,7 @@ export function writeRound(
     botMove: planBotMove(effective, state, botOffers, now),
     turnDeadline: turnDeadlineFor(effective, prev, state, now),
     nextRoundAt: nextRoundAtFor(effective, prev, state, now),
+    revealEndsAt: revealEndsAtFor(prev, state, now),
   };
   const wakeAt = wakeTime(priv);
   tx.set(privateRef(ref), priv);

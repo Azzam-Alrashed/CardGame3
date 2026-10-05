@@ -16,7 +16,7 @@ export const botTiming = { minMs: 2000, maxMs: 4000 };
 
 /** How long a person has for a betting turn before a bot takes their seat. */
 export const TURN_MS = 45_000;
-/** How long the result stays up before the next round is dealt (shorter when everyone withdrew). */
+/** How long the result stays up, after the reveal, before the next round is dealt (shorter when everyone withdrew). */
 export const NEXT_ROUND_MS = 8_000;
 export const REDEAL_MS = 4_000;
 
@@ -33,6 +33,8 @@ export interface PrivateRound {
   turnDeadline?: number | null;
   /** Epoch ms when the next round is dealt (finished rounds only). */
   nextRoundAt?: number | null;
+  /** Epoch ms when phones finish staging the reveal (finished rounds only); no dealing before then. */
+  revealEndsAt?: number | null;
 }
 
 export interface PlannedBotMove {
@@ -94,14 +96,33 @@ export function turnDeadlineFor(room: Room, prev: PrivateRound | null, state: Ro
 }
 
 /**
- * When to deal the next round, or null. Only while someone seated is actually at the table:
- * a table of bots and away players waits for a person to come back.
+ * How long phones take to stage a showdown: the challengers turn their cards over one at a time,
+ * a drumroll, the boss card by card, then the verdict. Other outcomes have nothing to reveal.
+ * Mirrored by `RevealTimeline` in the iOS app (Models/Choreography.swift); keep them in step.
+ */
+export function revealMs(result: engine.RoundResult | null): number {
+  if (result?.outcome !== "showdown") return 0;
+  const challengers = result.revealed.length - 1;
+  return 5300 + Math.min(1000 * challengers, 5000);
+}
+
+/** When a finished round's reveal is over on every phone: the earliest the next round may be dealt. */
+export function revealEndsAtFor(prev: PrivateRound | null, state: RoundState, now: number): number | null {
+  if (state.phase !== "finished") return null;
+  const sameRound = prev !== null && prev.state.phase === "finished" && prev.state.roundNumber === state.roundNumber;
+  return (sameRound ? prev.revealEndsAt : null) ?? now + revealMs(state.result);
+}
+
+/**
+ * When to deal the next round (a few seconds after the reveal), or null. Only while someone seated
+ * is actually at the table: a table of bots and away players waits for a person to come back.
  */
 export function nextRoundAtFor(room: Room, prev: PrivateRound | null, state: RoundState, now: number): number | null {
   if (state.phase !== "finished" || !state.players.some((p) => isPerson(room, p.id))) return null;
   const sameRound = prev !== null && prev.state.phase === "finished" && prev.state.roundNumber === state.roundNumber;
   const wait = state.result?.outcome === "redeal" ? REDEAL_MS : NEXT_ROUND_MS;
-  return (sameRound ? prev.nextRoundAt : null) ?? now + wait;
+  const revealEnds = revealEndsAtFor(prev, state, now) ?? now;
+  return (sameRound ? prev.nextRoundAt : null) ?? Math.max(now, revealEnds) + wait;
 }
 
 /** When this round next needs attention, or null if it is waiting on people. */

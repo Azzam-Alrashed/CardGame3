@@ -6,6 +6,8 @@ struct Banner: View {
     var room: Room
     var round: PublicRound
     var me: String?
+    /// The showdown this phone is staging, if any.
+    var reveal: RevealClock?
 
     var body: some View {
         VStack(spacing: 8) {
@@ -29,7 +31,7 @@ struct Banner: View {
                     .multilineTextAlignment(.center)
                     .contentTransition(.numericText())
             case .finished:
-                ResultSummary(room: room, round: round, me: me)
+                ResultSummary(room: room, round: round, me: me, reveal: reveal)
             }
         }
         .padding(.horizontal, 20)
@@ -76,85 +78,172 @@ struct Countdown: View {
     }
 }
 
+/// The round's result. A showdown is staged: everyone's cards start face down, the challengers turn
+/// theirs over one at a time, then the boss, and only then come the crown, the points and the headline.
+/// Tapping skips to the verdict on this phone.
 private struct ResultSummary: View {
+    @Environment(Backend.self) private var backend
     var room: Room
     var round: PublicRound
     var me: String?
+    var reveal: RevealClock?
 
     var body: some View {
-        let result = round.result ?? RoundResult(outcome: .redeal, winnerId: nil, revealed: [], deltas: [:])
-        VStack(spacing: 10) {
-            Text(headline(result)).font(Theme.wordmark(32)).multilineTextAlignment(.center)
-            if let paid = dealsPaid(result) {
-                Text("Paid \(paid.formatted()) in deals").font(Theme.body(16, .semibold)).opacity(0.75)
+        if let reveal {
+            TimelineView(FramesUntil(end: reveal.end, fps: 30)) { context in
+                summary(at: reveal.elapsed(at: context.date))
             }
-            ForEach(Array(result.revealed.enumerated()), id: \.element) { row, uid in
-                HStack(spacing: 4) {
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(uid == me ? "You" : room.name(of: uid))
-                            .font(Theme.body(14, .bold))
-                        if let hand = HandValue(round.revealedHands[uid] ?? []) {
-                            Text(hand.name).font(Theme.body(11, .semibold)).opacity(0.7)
-                        }
-                    }
-                    .lineLimit(1).minimumScaleFactor(0.6)
-                    .frame(width: 76, alignment: .leading)
-                    ForEach(Array((round.revealedHands[uid] ?? []).enumerated()), id: \.element) { i, card in
-                        PlayingCard(rank: card.rank, suit: card.suit, width: 34)
-                            .flipIn(delay: Double(row) * 0.25 + Double(i) * 0.06)
-                    }
-                    Spacer()
-                    delta(result.deltas[uid] ?? 0)
+            .contentShape(Rectangle())
+            .onTapGesture { backend.skipReveal() }
+        } else {
+            summary(at: .infinity)
+        }
+    }
+
+    private var result: RoundResult {
+        round.result ?? RoundResult(outcome: .redeal, winnerId: nil, revealed: [], deltas: [:])
+    }
+
+    /// The showdown's order and timing; also used (fully played) when this phone didn't stage it.
+    private var timeline: RevealTimeline? {
+        reveal?.timeline ?? RevealTimeline(round: round, seatOrder: room.players.map(\.uid))
+    }
+
+    private func summary(at t: TimeInterval) -> some View {
+        let verdict = t >= (timeline?.verdictAt ?? 0)
+        let leader = bestSoFar(at: t)
+        return VStack(spacing: 10) {
+            if verdict {
+                Text(headline).font(Theme.wordmark(32)).multilineTextAlignment(.center)
+                    .transition(.scale(scale: 0.6).combined(with: .opacity))
+                if let callout {
+                    Text(callout).font(Theme.body(15, .heavy))
+                        .padding(.horizontal, 12).padding(.vertical, 4)
+                        .background(Capsule().fill(Theme.hotPink))
+                        .foregroundStyle(.white)
+                        .transition(.scale(scale: 0.4).combined(with: .opacity))
                 }
-                .padding(8)
-                .background(RoundedRectangle(cornerRadius: 16).fill(.white.opacity(uid == result.winnerId ? 0.9 : 0.4)))
-                .overlay(alignment: .topLeading) {
-                    if uid == result.winnerId {
-                        Text("👑").font(.system(size: 22)).rotationEffect(.degrees(-20)).offset(x: -6, y: -12)
-                    }
+                if let paid = dealsPaid {
+                    Text("Paid \(paid.formatted()) in deals").font(Theme.body(16, .semibold)).opacity(0.75)
                 }
-                .scaleEffect(uid == result.winnerId ? 1.03 : 1)
+            } else {
+                let bossTurn = t >= (timeline?.drumrollAt ?? 0)
+                Text(bossTurn ? "\(round.bossId == me ? "You reveal" : "\(room.name(of: round.bossId ?? "")) reveals")…" : "Showdown!")
+                    .font(Theme.wordmark(32)).multilineTextAlignment(.center)
+                    .id(bossTurn)
+                    .transition(.push(from: .bottom).combined(with: .opacity))
             }
-            let others = result.deltas.filter { !result.revealed.contains($0.key) }
-            ForEach(others.sorted { $0.key < $1.key }, id: \.key) { uid, amount in
-                HStack {
-                    Text(uid == me ? "You" : room.name(of: uid)).font(Theme.body(14, .bold))
-                    Spacer()
-                    delta(amount)
+            ForEach(timeline?.order ?? result.revealed, id: \.self) { uid in
+                row(uid, at: t, verdict: verdict, leading: uid == leader)
+            }
+            if verdict {
+                let others = result.deltas.filter { !result.revealed.contains($0.key) }
+                ForEach(others.sorted { $0.key < $1.key }, id: \.key) { uid, amount in
+                    HStack {
+                        Text(uid == me ? "You" : room.name(of: uid)).font(Theme.body(14, .bold))
+                        Spacer()
+                        RollingDelta(amount: amount)
+                    }
+                    .padding(.horizontal, 12)
                 }
-                .padding(.horizontal, 12)
             }
         }
         // Keeps rows readable on iPad and leaves room for the winner's crown and lift.
         .frame(maxWidth: 560)
         .padding(.horizontal, 6)
+        .animation(.spring(duration: 0.5, bounce: 0.4), value: verdict)
+        .animation(.spring(duration: 0.35, bounce: 0.4), value: leader)
     }
 
-    private func headline(_ result: RoundResult) -> String {
+    private func row(_ uid: String, at t: TimeInterval, verdict: Bool, leading: Bool) -> some View {
+        let cards = round.revealedHands[uid] ?? []
+        let shown = t >= (timeline?.shownTime(uid) ?? 0)
+        let won = verdict && uid == result.winnerId
+        let lost = verdict && uid != result.winnerId
+        return HStack(spacing: 4) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(uid == me ? "You" : room.name(of: uid)).font(Theme.body(14, .bold))
+                Text(shown ? HandValue(cards)?.name ?? "" : uid == round.bossId ? "Boss" : " ")
+                    .font(Theme.body(11, .semibold)).opacity(0.7)
+                    .contentTransition(.opacity)
+            }
+            .lineLimit(1).minimumScaleFactor(0.6)
+            .frame(width: 76, alignment: .leading)
+            ForEach(Array(cards.enumerated()), id: \.element) { i, card in
+                let up = t >= (timeline?.flipTime(uid, card: i) ?? 0)
+                FlipCard(card: card, faceUp: up, width: 34)
+                    .animation(.spring(duration: 0.35, bounce: 0.3), value: up)
+            }
+            Spacer(minLength: 4)
+            if verdict {
+                RollingDelta(amount: result.deltas[uid] ?? 0).transition(.scale.combined(with: .opacity))
+            } else if leading {
+                Text("Best so far").font(Theme.body(11, .heavy))
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(Capsule().fill(Theme.ink)).foregroundStyle(.white)
+                    .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .padding(8)
+        .background(RoundedRectangle(cornerRadius: 16).fill(.white.opacity(won ? 0.9 : 0.4)))
+        .overlay(alignment: .topLeading) {
+            if won {
+                Text("👑").font(.system(size: 22)).rotationEffect(.degrees(-20)).offset(x: -6, y: -12)
+                    .transition(.offset(y: -60).combined(with: .opacity))
+            }
+        }
+        .scaleEffect(won ? 1.03 : 1)
+        .opacity(lost ? 0.6 : 1)
+        .offset(y: lost ? 3 : 0)
+    }
+
+    /// The strongest challenger shown so far, while there's more than one to compare.
+    private func bestSoFar(at t: TimeInterval) -> String? {
+        guard let timeline, t < timeline.verdictAt else { return nil }
+        let hands = timeline.challengers
+            .filter { t >= timeline.shownTime($0) }
+            .compactMap { uid in HandValue(round.revealedHands[uid] ?? []).map { (uid, $0) } }
+        guard hands.count > 1 else { return nil }
+        return hands.max { $1.1.beats($0.1) }?.0
+    }
+
+    private var headline: String {
         switch result.outcome {
         case .redeal: return "Everyone folded.\nRedeal!"
         default:
             let who = result.winnerId == me ? "You win" : "\(room.name(of: result.winnerId ?? "")) wins"
-            return "\(who) \(winAmount(result).formatted())!"
+            return "\(who) \(winAmount.formatted())!"
         }
     }
 
+    /// The moments people argue about: "The boss falls!", "Won on the suit! ♠ beats ♥".
+    private var callout: String? {
+        guard result.outcome == .showdown, let winner = result.winnerId,
+              let best = HandValue(round.revealedHands[winner] ?? []) else { return nil }
+        let rivals = result.revealed.filter { $0 != winner }.compactMap { HandValue(round.revealedHands[$0] ?? []) }
+        guard let runnerUp = rivals.max(by: { $1.beats($0) }) else { return nil }
+        let close: String? = switch best.decider(against: runnerUp) {
+        case .kicker: "Won on the kicker!"
+        case .suit:
+            "Won on the suit! \(HandValue.suitSymbol[best.topSuit] ?? "") beats \(HandValue.suitSymbol[runnerUp.topSuit] ?? "")"
+        default: nil
+        }
+        let parts = [winner != round.bossId ? "The boss falls!" : nil, close].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " ")
+    }
+
     /// What the winner won before paying deals: the boss's bet (or the lone entrant's bet).
-    private func winAmount(_ result: RoundResult) -> Int {
+    private var winAmount: Int {
         guard let winner = result.winnerId else { return 0 }
         if let boss = round.bossId { return round.bets[boss] ?? 0 }
         return round.bets[winner] ?? result.deltas[winner] ?? 0
     }
 
     /// Deals the winning boss paid out, if any.
-    private func dealsPaid(_ result: RoundResult) -> Int? {
+    private var dealsPaid: Int? {
         guard result.winnerId != nil, result.winnerId == round.bossId else { return nil }
         let total = round.deals.values.reduce(0, +)
         return total > 0 ? total : nil
-    }
-
-    private func delta(_ amount: Int) -> some View {
-        RollingDelta(amount: amount)
     }
 }
 
@@ -172,22 +261,5 @@ private struct RollingDelta: View {
             .contentTransition(.numericText(value: Double(shown)))
             .onAppear { withAnimation(.smooth(duration: 0.8).delay(0.5)) { shown = amount } }
             .onChange(of: amount) { withAnimation(.smooth) { shown = amount } }
-    }
-}
-
-extension View {
-    /// Flips a card face up after `delay` when it first appears.
-    func flipIn(delay: Double) -> some View { modifier(FlipIn(delay: delay)) }
-}
-
-private struct FlipIn: ViewModifier {
-    var delay: Double
-    @State private var up = false
-
-    func body(content: Content) -> some View {
-        content
-            .rotation3DEffect(.degrees(up ? 0 : 90), axis: (x: 0, y: 1, z: 0), perspective: 0.5)
-            .opacity(up ? 1 : 0)
-            .onAppear { withAnimation(.spring(duration: 0.4, bounce: 0.3).delay(delay)) { up = true } }
     }
 }

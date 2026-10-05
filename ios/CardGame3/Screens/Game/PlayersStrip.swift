@@ -8,6 +8,8 @@ struct PlayersStrip: View {
     var clock: DealClock?
     /// How many of my cards I've turned over (shown before the server has it).
     var myFlips = 0
+    /// The showdown this phone is staging, if any.
+    var reveal: RevealClock?
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -15,7 +17,7 @@ struct PlayersStrip: View {
                 HStack(spacing: 14) {
                     ForEach(room.players) { player in
                         PlayerChip(room: room, round: round, uid: player.uid, isMe: player.uid == me,
-                                   clock: clock, myFlips: myFlips)
+                                   clock: clock, myFlips: myFlips, reveal: reveal)
                             .playerMenu(player.uid, in: room)
                             .id(player.uid)
                     }
@@ -41,19 +43,23 @@ private struct PlayerChip: View {
     var isMe: Bool
     var clock: DealClock?
     var myFlips: Int
+    var reveal: RevealClock?
 
     var body: some View {
         let out = !room.isStillIn(uid)
-        VStack(spacing: 4) {
-            // Frames while cards land here and bots look at theirs.
-            TimelineView(FramesUntil(end: clock?.peeksEnd ?? .distantPast, fps: 30)) { context in
+        // Frames while cards land here, bots look at theirs, and the showdown plays.
+        TimelineView(FramesUntil(end: max(clock?.peeksEnd ?? .distantPast, reveal?.end ?? .distantPast), fps: 30)) { context in
+            // Points move at the showdown's verdict, not before.
+            let settled = reveal.map { context.date >= $0.verdict } ?? true
+            VStack(spacing: 4) {
                 avatar(at: context.date)
+                Text(isMe ? "You" : room.isAway(uid) ? "\(room.name(of: uid)) · away" : room.name(of: uid))
+                    .font(Theme.body(13, .bold)).lineLimit(1).minimumScaleFactor(0.7)
+                Text(out ? "Out" : room.points(of: uid, settled: settled).formatted()).font(Theme.body(12, .semibold)).opacity(0.7)
+                    .contentTransition(.numericText())
+                    .animation(.smooth(duration: 0.8), value: settled)
+                status.transition(.scale.combined(with: .opacity))
             }
-            Text(isMe ? "You" : room.isAway(uid) ? "\(room.name(of: uid)) · away" : room.name(of: uid))
-                .font(Theme.body(13, .bold)).lineLimit(1).minimumScaleFactor(0.7)
-            Text(out ? "Out" : room.points(of: uid).formatted()).font(Theme.body(12, .semibold)).opacity(0.7)
-                .contentTransition(.numericText())
-            status.transition(.scale.combined(with: .opacity))
         }
         .frame(width: 72)
         .opacity(out ? 0.35 : 1)
@@ -62,11 +68,12 @@ private struct PlayerChip: View {
     private func avatar(at date: Date) -> some View {
         let isTurn = round.turnId == uid
         let dealing = clock.map { date < $0.end } ?? false
+        let verdict = round.phase == .finished && (reveal.map { date >= $0.verdict } ?? true)
         return ZStack(alignment: .topTrailing) {
             Blob(
                 color: Theme.color(forSeat: room.seat(of: uid)),
                 size: 56,
-                mood: mood,
+                mood: mood(verdict: verdict),
                 look: dealing ? lookAtDealer : .zero,
                 hair: round.bossId == uid
             )
@@ -83,7 +90,12 @@ private struct PlayerChip: View {
             .dealSpot(round.dealerId == uid ? .dealer : nil)
             .overlay(alignment: .bottomTrailing) {
                 if room.isStillIn(uid), !round.withdrawn.contains(uid) {
-                    MiniCards(landed: clock?.landedCount(uid, at: date) ?? DealTimeline.handSize, peeked: peeked(at: date))
+                    MiniCards(
+                        landed: clock?.landedCount(uid, at: date) ?? DealTimeline.handSize,
+                        peeked: peeked(at: date),
+                        faces: round.revealedHands[uid] ?? [],
+                        faceUp: faceUp(at: date)
+                    )
                         .dealSpot(.seat(uid))
                         .offset(x: 14, y: -2)
                         .transition(.offset(y: 14).combined(with: .opacity))
@@ -120,8 +132,18 @@ private struct PlayerChip: View {
         return isMe ? max(told, myFlips) : told
     }
 
-    private var mood: Blob.Mood {
-        if round.result?.winnerId == uid { return .wink }
+    /// How many of this player's cards have turned over in the showdown.
+    private func faceUp(at date: Date) -> Int {
+        guard round.revealedHands[uid] != nil else { return 0 }
+        guard let reveal else { return DealTimeline.handSize }
+        let t = reveal.elapsed(at: date)
+        return (0..<DealTimeline.handSize).filter { t >= reveal.timeline.flipTime(uid, card: $0) }.count
+    }
+
+    /// Once the result is in (after the showdown plays): the winner winks, the other revealed hands are sad.
+    private func mood(verdict: Bool) -> Blob.Mood {
+        if verdict, round.result?.winnerId == uid { return .wink }
+        if verdict, round.result?.revealed.contains(uid) == true { return .sad }
         if round.withdrawn.contains(uid) { return .sleepy }
         if round.bossId == uid { return .surprised }
         return .happy
@@ -160,20 +182,31 @@ private struct PlayerChip: View {
 private struct MiniCards: View {
     var landed: Int
     var peeked: Int
+    /// Turned face up in a showdown, one card at a time.
+    var faces: [Card] = []
+    var faceUp = 0
 
     var body: some View {
         // 7 pt apart; DealLayer lands each card in the same spot.
         HStack(spacing: 5 - DealLayer.miniWidth) {
             ForEach(0..<DealTimeline.handSize, id: \.self) { i in
                 // Unseen cards lie flat on the table; a card that's been looked at stands up.
-                CardBack(width: DealLayer.miniWidth)
-                    .scaleEffect(x: 1, y: i < peeked ? 1 : 0.6, anchor: .bottom)
-                    .rotationEffect(.degrees(Double(i) * 8 - 12 + (i < peeked ? -8 : 0)), anchor: .bottom)
-                    .offset(y: i < peeked ? -7 : 0)
-                    .opacity(i < landed ? 1 : 0)
+                let standing = i < peeked || i < faceUp
+                Group {
+                    if i < faces.count {
+                        FlipCard(card: faces[i], faceUp: i < faceUp, width: DealLayer.miniWidth)
+                    } else {
+                        CardBack(width: DealLayer.miniWidth)
+                    }
+                }
+                .scaleEffect(x: 1, y: standing ? 1 : 0.6, anchor: .bottom)
+                .rotationEffect(.degrees(Double(i) * 8 - 12 + (standing ? -8 : 0)), anchor: .bottom)
+                .offset(y: standing ? -7 : 0)
+                .opacity(i < landed ? 1 : 0)
             }
         }
         .animation(.spring(duration: 0.3, bounce: 0.55), value: peeked)
+        .animation(.spring(duration: 0.35, bounce: 0.3), value: faceUp)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(peeked == 0 ? "Hasn't looked at their cards" : "Looked at \(peeked) of 4 cards")
     }

@@ -32,7 +32,7 @@ struct PlayingCard: View {
             .overlay { Text(suitSymbol).font(.system(size: width * 0.5)) }
             .foregroundStyle(ink)
             .frame(width: width, height: width * 1.4)
-            .shadow(color: .black.opacity(0.18), radius: 10, y: 6)
+            .shadow(color: .black.opacity(0.18), radius: min(10, width * 0.11), y: min(6, width * 0.07))
     }
 }
 

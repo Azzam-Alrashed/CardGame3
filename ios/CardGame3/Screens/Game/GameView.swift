@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// The table: everyone's status on top, the round's state in the middle, your cards and actions below.
 struct GameView: View {
@@ -14,15 +15,16 @@ struct GameView: View {
         } else if let room = backend.room, let round = room.round {
             let me = backend.uid ?? ""
             let clock = backend.dealClock
+            let reveal = backend.revealClock
             AdaptiveSplit {
                 VStack(spacing: 0) {
-                    header(room, round)
-                    PlayersStrip(room: room, round: round, me: backend.uid, clock: clock, myFlips: backend.flipped.count)
+                    header(room, round, reveal: reveal)
+                    PlayersStrip(room: room, round: round, me: backend.uid, clock: clock, myFlips: backend.flipped.count, reveal: reveal)
                     Spacer(minLength: 8)
                     // Results can be tall; scroll them when the screen is short (landscape).
                     ViewThatFits(in: .vertical) {
-                        Banner(room: room, round: round, me: backend.uid)
-                        ScrollView { Banner(room: room, round: round, me: backend.uid) }
+                        Banner(room: room, round: round, me: backend.uid, reveal: reveal)
+                        ScrollView { Banner(room: room, round: round, me: backend.uid, reveal: reveal) }
                     }
                     Spacer(minLength: 8)
                 }
@@ -45,21 +47,29 @@ struct GameView: View {
                 if let clock { DealLayer(clock: clock, me: backend.uid, spots: dealSpots) }
             }
             .overlay {
+                // After the showdown has played out.
                 if round.phase == .finished, round.result?.winnerId == backend.uid {
-                    Confetti().ignoresSafeArea().id(round.roundNumber)
+                    TimelineView(FramesUntil(end: reveal?.verdict ?? .distantPast, fps: 10)) { context in
+                        if context.date >= reveal?.verdict ?? .distantPast { Confetti().ignoresSafeArea() }
+                    }
+                    .id(round.roundNumber)
                 }
+            }
+            .task(id: reveal?.start) {
+                if let reveal { await playRevealSounds(reveal) }
             }
             .sensoryFeedback(.impact(weight: .heavy), trigger: round.turnId) { (_: String?, turn: String?) in turn != nil && turn == backend.uid }
             .soundFeedback(.turn, trigger: round.turnId) { (_: String?, turn: String?) in turn != nil && turn == backend.uid }
             .onChange(of: round) { old, new in playTableSounds(old, new, room: room) }
             .sensoryFeedback(trigger: round.phase) { _, phase in
-                guard phase == .finished, let winner = round.result?.winnerId else { return nil }
+                // A staged showdown buzzes at its verdict instead (playRevealSounds).
+                guard phase == .finished, backend.revealClock == nil, let winner = round.result?.winnerId else { return nil }
                 return winner == backend.uid ? .success : .impact(weight: .medium)
             }
         }
     }
 
-    private func header(_ room: Room, _ round: PublicRound) -> some View {
+    private func header(_ room: Room, _ round: PublicRound, reveal: RevealClock?) -> some View {
         HStack {
             Button {
                 confirmLeave = true
@@ -83,12 +93,16 @@ struct GameView: View {
                 .accessibilityLabel("How to play")
                 .sheet(isPresented: $showRules) { HowToPlayView() }
             if let uid = backend.uid {
-                Label(room.points(of: uid).formatted(), systemImage: "circle.hexagongrid.fill")
-                    .font(Theme.body(17, .heavy).monospacedDigit())
-                    .contentTransition(.numericText(value: Double(room.points(of: uid))))
-                    .animation(.smooth(duration: 0.8), value: room.points(of: uid))
-                    .padding(.horizontal, 14).padding(.vertical, 8)
-                    .background(Capsule().fill(.white))
+                // Points move at the showdown's verdict, not before: no spoilers.
+                TimelineView(FramesUntil(end: reveal?.verdict ?? .distantPast, fps: 4)) { context in
+                    let points = room.points(of: uid, settled: context.date >= reveal?.verdict ?? .distantPast)
+                    Label(points.formatted(), systemImage: "circle.hexagongrid.fill")
+                        .font(Theme.body(17, .heavy).monospacedDigit())
+                        .contentTransition(.numericText(value: Double(points)))
+                        .animation(.smooth(duration: 0.8), value: points)
+                        .padding(.horizontal, 14).padding(.vertical, 8)
+                        .background(Capsule().fill(.white))
+                }
             }
         }
         .padding(.horizontal, 20)
@@ -112,12 +126,48 @@ struct GameView: View {
             sound.play(.reject)
         }
         if old.phase == .betting, new.phase == .deals { sound.play(.boss) }
-        if old.phase != .finished, new.phase == .finished, let result = new.result {
-            let me = backend.uid ?? ""
-            switch result.outcome {
-            case .redeal: sound.play(.fold)
-            default: sound.play(result.winnerId == me ? .win : (result.deltas[me] ?? 0) < 0 ? .lose : .verdict)
+        // A staged showdown plays its own sounds (playRevealSounds).
+        if old.phase != .finished, new.phase == .finished, let result = new.result, backend.revealClock == nil {
+            sound.play(verdictSound(result))
+        }
+    }
+
+    private func verdictSound(_ result: RoundResult) -> Sound {
+        let me = backend.uid ?? ""
+        if result.outcome == .redeal { return .fold }
+        return result.winnerId == me ? .win : (result.deltas[me] ?? 0) < 0 ? .lose : .verdict
+    }
+
+    /// The showdown's sounds, in time with the cards: a snap for each one turned over, a darbuka roll
+    /// before the boss, a deep doum on the boss's last card, then the verdict (with a buzz).
+    private func playRevealSounds(_ reveal: RevealClock) async {
+        let sound = SoundPlayer.shared
+        // Restarted by a skip: cut the drumroll short.
+        sound.stop(.roll)
+        let timeline = reveal.timeline
+        var events: [(at: TimeInterval, play: () -> Void)] = [(timeline.drumrollAt, { sound.play(.roll) })]
+        for uid in timeline.order {
+            for card in 0..<DealTimeline.handSize {
+                let last = uid == timeline.boss && card == DealTimeline.handSize - 1
+                events.append((timeline.flipTime(uid, card: card), {
+                    sound.play(.flip, volume: last ? 1 : 0.7)
+                    if last { sound.play(.doum) }
+                }))
             }
+        }
+        events.append((timeline.verdictAt, { [backend] in
+            sound.stop(.roll)
+            guard let result = backend.room?.round?.result else { return }
+            sound.play(verdictSound(result))
+            let won = result.winnerId == backend.uid
+            UIImpactFeedbackGenerator(style: won ? .heavy : .medium).impactOccurred()
+        }))
+        for event in events.sorted(by: { $0.at < $1.at }) {
+            let wait = event.at - reveal.elapsed(at: .now)
+            if wait < -0.1 { continue }
+            if wait > 0 { try? await Task.sleep(for: .seconds(wait)) }
+            if Task.isCancelled { return }
+            event.play()
         }
     }
 }

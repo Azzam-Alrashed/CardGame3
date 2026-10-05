@@ -81,7 +81,7 @@ function assertBeforeDeadline(now: number, deadline: number | null): void {
 
 /**
  * Deals the next round early (the server deals it on its own a few seconds after the result).
- * Any player may call this once a round finishes; `roundNumber` makes double calls harmless.
+ * Any player may call this once everyone's reveal has played; `roundNumber` makes double calls harmless.
  */
 export async function nextRound(db: Firestore, uid: string, d: { code?: unknown; roundNumber?: unknown }): Promise<void> {
   const code = cleanCode(d.code);
@@ -92,9 +92,12 @@ export async function nextRound(db: Firestore, uid: string, d: { code?: unknown;
     const room = roomSnap.data() as Room;
     if (!room.playerIds.includes(uid)) throw new HttpsError("permission-denied", "You are not in this room");
     if (room.status !== "playing" || !privSnap.exists) return null;
-    const { state } = privSnap.data() as PrivateRound;
+    const priv = privSnap.data() as PrivateRound;
+    const { state } = priv;
     if (state.roundNumber !== d.roundNumber) return null; // someone already moved on
     if (state.phase !== "finished") throw new HttpsError("failed-precondition", "The round is not finished");
+    // One impatient tap mustn't cut short everyone else's reveal.
+    if (priv.revealEndsAt != null && clock.now() < priv.revealEndsAt) return null;
     return advanceTable(tx, ref, room, state, clock.now());
   });
   await waker.wake(code, wakeAt);

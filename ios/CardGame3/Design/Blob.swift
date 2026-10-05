@@ -2,7 +2,7 @@ import SwiftUI
 
 /// A soft glowing ball with a little face.
 struct Blob: View {
-    enum Mood { case happy, wink, surprised, sleepy }
+    enum Mood { case happy, wink, surprised, sleepy, sad }
 
     var color: Color
     var size: CGFloat
@@ -68,6 +68,11 @@ struct Blob: View {
         switch mood {
         case .surprised:
             Circle().stroke(Theme.ink, lineWidth: size * 0.035).frame(width: size * 0.1, height: size * 0.1)
+        case .sad:
+            Smile()
+                .stroke(Theme.ink, style: StrokeStyle(lineWidth: size * 0.045, lineCap: .round))
+                .frame(width: size * 0.2, height: size * 0.06)
+                .scaleEffect(y: -1)
         default:
             Smile()
                 .stroke(Theme.ink, style: StrokeStyle(lineWidth: size * 0.045, lineCap: .round))

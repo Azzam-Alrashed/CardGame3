@@ -62,13 +62,15 @@ struct DealLayer: View {
     var me: String?
     var spots: DealSpots
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Cleared once the deal is over, so no card can be left in mid-air.
+    @State private var dealing = true
 
     /// Size of the small cards in front of each player (`MiniCards`).
     static let miniWidth: CGFloat = 12
 
     var body: some View {
         GeometryReader { geo in
-            if !reduceMotion {
+            if !reduceMotion, dealing {
                 TimelineView(FramesUntil(end: clock.end)) { context in
                     let t = context.date.timeIntervalSince(clock.start)
                     ZStack(alignment: .topLeading) {
@@ -87,7 +89,12 @@ struct DealLayer: View {
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
-        .task(id: clock.start) { await playSounds() }
+        .task(id: clock.start) {
+            dealing = true
+            await playSounds()
+            try? await Task.sleep(for: .seconds(max(0, clock.end.timeIntervalSinceNow) + 0.05))
+            if !Task.isCancelled { dealing = false }
+        }
     }
 
     // MARK: Drawing

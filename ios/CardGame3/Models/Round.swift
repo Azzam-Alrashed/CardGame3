@@ -26,6 +26,8 @@ struct PublicRound: Decodable, Equatable {
     let turnDeadline: Double?
     /// Epoch milliseconds when the server deals the next round.
     let nextRoundAt: Double?
+    /// Epoch milliseconds when every phone has finished staging the showdown; nobody can deal before.
+    let revealEndsAt: Double?
     let result: RoundResult?
     let revealedHands: [String: [Card]]
 
@@ -40,6 +42,7 @@ struct PublicRound: Decodable, Equatable {
     var deadlineDate: Date? { deadline.map(Date.init(epochMs:)) }
     var turnDeadlineDate: Date? { turnDeadline.map(Date.init(epochMs:)) }
     var nextRoundDate: Date? { nextRoundAt.map(Date.init(epochMs:)) }
+    var revealEndsDate: Date? { revealEndsAt.map(Date.init(epochMs:)) }
 }
 
 extension Date {

@@ -4,7 +4,7 @@ import { getApps, initializeApp } from "firebase-admin/app";
 import { Firestore, getFirestore } from "firebase-admin/firestore";
 import { addAiPlayer, createRoom, joinRoom, startGame } from "./rooms.js";
 import * as play from "./play.js";
-import { PrivateRound, botTiming, clock } from "./schedule.js";
+import { PrivateRound, botTiming, clock, revealMs } from "./schedule.js";
 import { cleanup, runDue, sweep, tick } from "./ticker.js";
 
 const onEmulator = !!process.env.FIRESTORE_EMULATOR_HOST;
@@ -90,7 +90,9 @@ describe.skipIf(!onEmulator)("ticker", () => {
     now = deadline!;
     await tick(db, code);
     expect((await room()).round.result.outcome).toBe("showdown");
-    expect((await room()).wakeAt).toBe(now + 8000); // next round
+    // The next round: after two hands are revealed on the phones (6.3 s), and 8 s to take in the result.
+    expect((await room()).round.revealEndsAt).toBe(now + 6300);
+    expect((await room()).wakeAt).toBe(now + 6300 + 8000);
   });
 
   it("running out of betting time hands your seat to a bot, which plays at once", async () => {
@@ -135,9 +137,10 @@ describe.skipIf(!onEmulator)("ticker", () => {
       await tick(db, code);
     }
     expect((await room()).round.phase).toBe("finished");
-    expect((await room()).round.nextRoundAt).toBe(now + 8000);
+    const wait = revealMs((await room()).round.result) + 8000;
+    expect((await room()).round.nextRoundAt).toBe(now + wait);
 
-    later(8000);
+    later(wait);
     await tick(db, code);
     expect((await room()).round).toMatchObject({ roundNumber: 2, phase: "betting", dealerId: "u1" });
   });
@@ -154,7 +157,7 @@ describe.skipIf(!onEmulator)("ticker", () => {
     expect((await room()).wakeAt).toBeNull();
 
     await play.setAway(db, "u0", { code, away: false });
-    expect((await room()).round.nextRoundAt).toBe(now + 8000);
+    expect((await room()).round.nextRoundAt).toBe(now + revealMs((await room()).round.result) + 8000);
   });
 
   it("a planned move that no longer fits is dropped, not retried forever", async () => {

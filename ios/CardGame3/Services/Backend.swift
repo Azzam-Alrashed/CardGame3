@@ -19,6 +19,9 @@ final class Backend {
     private(set) var dealtAt: (round: Int, date: Date)?
     /// Which of my cards (by position) I've turned over this round. Kept across launches.
     private(set) var flipped: Set<Int> = []
+    /// When this phone saw the current round's showdown, to stage the reveal. Nil when it was over
+    /// before we started listening: the result just shows.
+    private(set) var revealedAt: (round: Int, date: Date)?
     var errorMessage: String?
 
     var playerName: String {
@@ -231,9 +234,26 @@ final class Backend {
         return DealClock(timeline: DealTimeline(seats: seats, dealerId: round.dealerId), start: dealt.date, round: dealt.round)
     }
 
-    /// Notes when a new round is dealt (to animate it) and picks up which cards I'd already turned over.
+    /// The showdown this phone is staging for the current round, if any.
+    var revealClock: RevealClock? {
+        guard let room, let round = room.round, let seen = revealedAt, seen.round == round.roundNumber,
+              let timeline = RevealTimeline(round: round, seatOrder: room.players.map(\.uid)) else { return nil }
+        return RevealClock(timeline: timeline, start: seen.date, round: seen.round)
+    }
+
+    /// Jumps this phone's reveal to the verdict. (The next round still waits for everyone else's.)
+    func skipReveal() {
+        guard let clock = revealClock else { return }
+        let atVerdict = Date.now.addingTimeInterval(-clock.timeline.verdictAt)
+        if atVerdict < clock.start { revealedAt = (clock.round, atVerdict) }
+    }
+
+    /// Notes when a round is dealt or revealed (to animate them) and picks up which cards I'd turned over.
     private func roomChanged(from old: Room?, to new: Room?) {
         guard let new, let round = new.round else { return }
+        if let before = old?.round, before.roundNumber == round.roundNumber, before.phase != .finished, round.phase == .finished {
+            revealedAt = (round.roundNumber, .now)
+        }
         if round.roundNumber != old?.round?.roundNumber {
             // The first snapshot after listening shows a round already in progress: nothing to animate.
             if old != nil { dealtAt = (round.roundNumber, .now) }
@@ -309,6 +329,7 @@ final class Backend {
         myCards = []
         myCardsRound = nil
         dealtAt = nil
+        revealedAt = nil
         flipped = []
         peekTask?.cancel()
         UserDefaults.standard.removeObject(forKey: "roomCode")

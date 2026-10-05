@@ -20,9 +20,7 @@ struct ActionPanel: View {
                 switch round.phase {
                 case .betting: betting
                 case .deals: deals
-                case .finished:
-                    AsyncButton { await backend.nextRound() } label: { NextRoundLabel(at: round.nextRoundDate) }
-                        .buttonStyle(PillButtonStyle())
+                case .finished: afterRound
                 }
             }
         }
@@ -53,6 +51,27 @@ struct ActionPanel: View {
                 .buttonStyle(PillButtonStyle())
         }
         .transition(.move(edge: .bottom).combined(with: .opacity))
+    }
+
+    // After the round
+
+    /// While the showdown plays: Skip (on this phone). Then the next round, which nobody can deal
+    /// before everyone's reveal has played.
+    private var afterRound: some View {
+        let reveal = backend.revealClock
+        let revealEnds = round.revealEndsDate ?? .distantPast
+        return TimelineView(.periodic(from: .now, by: 0.25)) { context in
+            if let reveal, context.date < reveal.verdict {
+                Button("Skip") { backend.skipReveal() }
+                    .buttonStyle(PillButtonStyle(primary: false))
+                    .transition(.opacity)
+            } else {
+                AsyncButton { await backend.nextRound() } label: { NextRoundLabel(at: round.nextRoundDate) }
+                    .buttonStyle(PillButtonStyle())
+                    .disabled(context.date < revealEnds)
+                    .transition(.opacity)
+            }
+        }
     }
 
     // Betting

@@ -93,12 +93,72 @@ struct DealClock: Equatable {
 }
 
 /// Animation frames from now until `end`, then none: a `TimelineView` using it goes quiet when it's done.
+/// A last frame comes a little after `end`, so the final state is always drawn.
 struct FramesUntil: TimelineSchedule {
     var end: Date
     var fps: Double = 60
 
     func entries(from start: Date, mode: TimelineScheduleMode) -> AnySequence<Date> {
         let step = 1 / (mode == .lowFrequency ? 1 : fps)
-        return AnySequence(sequence(first: start) { $0 < end ? $0.addingTimeInterval(step) : nil })
+        let last = end.addingTimeInterval(0.1)
+        return AnySequence(sequence(first: start) { $0 < last ? $0.addingTimeInterval(step) : nil })
     }
+}
+
+// MARK: The reveal
+
+/// A showdown, staged: the challengers turn their cards over one at a time (in seat order), a drumroll,
+/// then the boss card by card, then the verdict. The server waits for it before anyone can deal the
+/// next round: `revealMs` in firebase/functions/src/schedule.ts mirrors `total`; keep them in step.
+struct RevealTimeline: Equatable {
+    static let intro: TimeInterval = 0.8
+    static let drumroll: TimeInterval = 1.0
+    static let bossTurn: TimeInterval = 2.0
+    static let verdict: TimeInterval = 1.5
+    /// When each of the boss's cards turns over, from the start of their turn: the last one slowest.
+    static let bossFlips: [TimeInterval] = [0, 0.35, 0.7, 1.5]
+    /// All the challengers together never take longer than this.
+    static let challengersAtMost: TimeInterval = 5
+
+    /// Revealing players other than the boss, in seat order. (The server's `revealed` has no useful order.)
+    let challengers: [String]
+    let boss: String
+    /// Time each challenger takes: a second, less when many reveal.
+    let per: TimeInterval
+
+    init?(round: PublicRound, seatOrder: [String]) {
+        guard let result = round.result, result.outcome == .showdown, let boss = round.bossId else { return nil }
+        let seat = { (uid: String) in seatOrder.firstIndex(of: uid) ?? 0 }
+        challengers = result.revealed.filter { $0 != boss }.sorted { seat($0) < seat($1) }
+        self.boss = boss
+        per = challengers.isEmpty ? 0 : min(1, Self.challengersAtMost / Double(challengers.count))
+    }
+
+    /// Everyone revealing, in the order they turn their cards over.
+    var order: [String] { challengers + [boss] }
+    var drumrollAt: TimeInterval { Self.intro + Double(challengers.count) * per }
+    var bossAt: TimeInterval { drumrollAt + Self.drumroll }
+    var verdictAt: TimeInterval { bossAt + Self.bossTurn }
+    var total: TimeInterval { verdictAt + Self.verdict }
+
+    /// When card `index` of `uid`'s hand turns over.
+    func flipTime(_ uid: String, card index: Int) -> TimeInterval {
+        if uid == boss { return bossAt + Self.bossFlips[index] }
+        let turn = Double(challengers.firstIndex(of: uid) ?? 0)
+        return Self.intro + (turn + Double(index) * 0.12) * per
+    }
+
+    /// When a whole hand is showing, and its name appears.
+    func shownTime(_ uid: String) -> TimeInterval { flipTime(uid, card: DealTimeline.handSize - 1) + 0.25 }
+}
+
+/// A showdown this phone is staging, and when it started.
+struct RevealClock: Equatable {
+    let timeline: RevealTimeline
+    let start: Date
+    let round: Int
+
+    func elapsed(at date: Date) -> TimeInterval { date.timeIntervalSince(start) }
+    var verdict: Date { start.addingTimeInterval(timeline.verdictAt) }
+    var end: Date { start.addingTimeInterval(timeline.total) }
 }
