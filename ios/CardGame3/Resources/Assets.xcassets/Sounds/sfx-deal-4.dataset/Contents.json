@@ -1,0 +1,13 @@
+{
+  "data" : [
+    {
+      "filename" : "sfx-deal-4.caf",
+      "idiom" : "universal",
+      "universal-type-identifier" : "com.apple.coreaudio-format"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

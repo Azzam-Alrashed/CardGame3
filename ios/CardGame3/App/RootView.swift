@@ -20,7 +20,10 @@ struct RootView: View {
         }
         .animation(.smooth(duration: 0.45), value: backend.room?.status)
         .foregroundStyle(Theme.ink)
-        .task { await backend.signIn() }
+        .task {
+            SoundPlayer.shared.preload()
+            await backend.signIn()
+        }
         .alert("Something went wrong", isPresented: errorShown) {
             Button("OK") { backend.errorMessage = nil }
         } message: {

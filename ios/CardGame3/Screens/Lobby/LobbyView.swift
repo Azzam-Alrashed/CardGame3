@@ -69,6 +69,7 @@ struct LobbyView: View {
             .scrollBounceBehavior(.basedOnSize)
             }
             .sensoryFeedback(.impact(weight: .light), trigger: room.players.count)
+            .soundFeedback(.join, trigger: room.players.count) { old, new in new > old }
             .frame(maxHeight: .infinity)
           }
           .confirmationDialog(

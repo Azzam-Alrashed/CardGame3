@@ -65,6 +65,7 @@ struct Countdown: View {
                 }
                 .animation(.snappy, value: left)
                 .sensoryFeedback(.impact(weight: .light), trigger: left) { _, left in left <= 5 && left > 0 }
+                .soundFeedback(.tick, trigger: left) { _, left in left <= 5 && left > 0 }
                 .onChange(of: left == 0, initial: true) { _, isZero in
                     if isZero && !fired {
                         fired = true

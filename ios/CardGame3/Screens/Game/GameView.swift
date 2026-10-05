@@ -36,6 +36,8 @@ struct GameView: View {
                 }
             }
             .sensoryFeedback(.impact(weight: .heavy), trigger: round.turnId) { (_: String?, turn: String?) in turn != nil && turn == backend.uid }
+            .soundFeedback(.turn, trigger: round.turnId) { (_: String?, turn: String?) in turn != nil && turn == backend.uid }
+            .onChange(of: round) { old, new in playTableSounds(old, new, room: room) }
             .sensoryFeedback(trigger: round.phase) { _, phase in
                 guard phase == .finished, let winner = round.result?.winnerId else { return nil }
                 return winner == backend.uid ? .success : .impact(weight: .medium)
@@ -61,6 +63,7 @@ struct GameView: View {
                 .contentTransition(.numericText())
                 .animation(.snappy, value: round.roundNumber)
             Spacer()
+            SoundToggle(size: 40)
             Button { showRules = true } label: { Image(systemName: "questionmark") }
                 .buttonStyle(CircleButtonStyle(size: 40))
                 .accessibilityLabel("How to play")
@@ -76,5 +79,33 @@ struct GameView: View {
         }
         .padding(.horizontal, 20)
         .padding(.top, 8)
+    }
+
+    /// What everyone at the table hears when the round changes: chips, folds, offers, the boss, the result.
+    private func playTableSounds(_ old: PublicRound, _ new: PublicRound, room: Room) {
+        let sound = SoundPlayer.shared
+        guard old.roundNumber == new.roundNumber else {
+            sound.play(.shuffle)
+            return
+        }
+        for (uid, amount) in new.bets where old.bets[uid] != amount {
+            let points = room.table?.seats.first { $0.id == uid }?.points ?? 0
+            sound.play(amount >= points ? .allIn : amount >= 2_000 ? .chipsBig : amount >= 1_000 ? .chips : .chip)
+        }
+        if new.withdrawn.count > old.withdrawn.count { sound.play(.fold) }
+        if new.offers.contains(where: { old.offers[$0.key] != $0.value }) { sound.play(.offer) }
+        if new.deals.count > old.deals.count {
+            sound.play(.accept)
+        } else if new.phase == .deals, old.offers.keys.contains(where: { new.offers[$0] == nil }) {
+            sound.play(.reject)
+        }
+        if old.phase == .betting, new.phase == .deals { sound.play(.boss) }
+        if old.phase != .finished, new.phase == .finished, let result = new.result {
+            let me = backend.uid ?? ""
+            switch result.outcome {
+            case .redeal: sound.play(.fold)
+            default: sound.play(result.winnerId == me ? .win : (result.deltas[me] ?? 0) < 0 ? .lose : .verdict)
+            }
+        }
     }
 }

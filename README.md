@@ -24,6 +24,7 @@ The full rules are in **[RULES.md](RULES.md)**.
 - **Play again.** After a game, one tap opens a new lobby with the same AI players, and everyone else gets a **Join rematch** button.
 - **A bot that plays fair.** It sees only its own cards, works out its odds by dealing imaginary hands from the cards it hasn't seen, and bluffs now and then.
 - **Know your hand.** Your hand's name ("Pair of Queens") shows under your cards and next to every revealed hand.
+- **Sound.** Chips, cards, little jingles and a darbuka drumroll. Quiet when the phone is on silent, with a speaker button to turn it off.
 - **Safe names.** Offensive names are refused. Long-press any player to report their name or hide it on your phone.
 - **First-launch onboarding** and a **How to play** sheet, also available at the table.
 - **iPhone and iPad** in every orientation.
@@ -35,7 +36,7 @@ The full rules are in **[RULES.md](RULES.md)**.
 | `firebase/functions/` | Backend in TypeScript: the rules engine and the bot (`src/engine/`), plus rooms, rounds and AI players as Cloud Functions |
 | `firebase/firestore.rules` | Security rules: players see only their own room and their own cards |
 | `ios/` | iOS app in SwiftUI (`CardGame3.xcodeproj`) |
-| `assets/` | Logo and wordmark |
+| `assets/` | Logo and wordmark, and the script that builds the sound set (sounds by [Kenney](https://kenney.nl), CC0) |
 | `docs/` | Landing page for GitHub Pages: one static `index.html` plus images in `docs/img/` |
 | `android/` | Android app in Kotlin *(coming soon)* |
 
