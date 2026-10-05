@@ -9,14 +9,21 @@ struct ActionPanel: View {
     private var me: String { backend.uid ?? "" }
     private var myPoints: Int { room.points(of: me) }
 
+    /// A bot is playing this player's seat (they stepped away, or their turn ran out).
+    private var botHasMySeat: Bool { room.isAway(me) && room.isStillIn(me) }
+
     var body: some View {
         VStack(spacing: 12) {
-            switch round.phase {
-            case .betting: betting
-            case .deals: deals
-            case .finished:
-                AsyncButton("Next round") { await backend.nextRound() }
-                    .buttonStyle(PillButtonStyle())
+            if botHasMySeat {
+                botPlaying
+            } else {
+                switch round.phase {
+                case .betting: betting
+                case .deals: deals
+                case .finished:
+                    AsyncButton { await backend.nextRound() } label: { NextRoundLabel(at: round.nextRoundDate) }
+                        .buttonStyle(PillButtonStyle())
+                }
             }
         }
         .blocksWhileBusy()
@@ -24,6 +31,7 @@ struct ActionPanel: View {
         .sensoryFeedback(.impact(weight: .medium), trigger: round.offers) { old, new in
             round.bossId == me && new.count > old.count
         }
+        .sensoryFeedback(.warning, trigger: botHasMySeat) { _, now in now }
         .animation(.spring(duration: 0.4, bounce: 0.3), value: round)
         .padding(20)
         .background(
@@ -33,14 +41,30 @@ struct ActionPanel: View {
         )
     }
 
+    // Away
+
+    private var botPlaying: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 10) {
+                Text("🤖").font(.system(size: 28))
+                Text("A bot is playing your seat").font(Theme.body(17, .bold))
+            }
+            AsyncButton("Take my seat back") { await backend.takeSeatBack() }
+                .buttonStyle(PillButtonStyle())
+        }
+        .transition(.move(edge: .bottom).combined(with: .opacity))
+    }
+
     // Betting
 
-    /// Smallest bet that beats the highest one.
-    /// Next step of 500 above the highest bet (which may be an odd all-in amount).
+    /// Smallest bet that beats the highest one: the next step of 500 above it (it may be an odd all-in amount).
     private var minBet: Int { max(Betting.minBet, (round.highestBet / Betting.step + 1) * Betting.step) }
 
     @ViewBuilder private var betting: some View {
         if round.turnId == me {
+            if let deadline = round.turnDeadlineDate {
+                Countdown(deadline: deadline, size: 20)
+            }
             if minBet <= myPoints {
                 AmountPicker(amount: $amount, range: minBet...roundDown(myPoints))
                 AsyncButton("Bet \(amount.formatted())") { await backend.bet(amount) }
@@ -149,6 +173,23 @@ private struct AmountPicker: View {
         }
         .buttonStyle(CircleButtonStyle(size: 56))
         .buttonRepeatBehavior(.enabled)
+    }
+}
 
+/// "Next round · 6": counts down to the server dealing it; tapping deals it now.
+private struct NextRoundLabel: View {
+    var at: Date?
+
+    var body: some View {
+        if let at {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                let left = max(0, Int(at.timeIntervalSince(context.date).rounded(.up)))
+                Text(left > 0 ? "Next round · \(left)" : "Dealing…")
+                    .contentTransition(.numericText(countsDown: true))
+                    .animation(.snappy, value: left)
+            }
+        } else {
+            Text("Next round")
+        }
     }
 }

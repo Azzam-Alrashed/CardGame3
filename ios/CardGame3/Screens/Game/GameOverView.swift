@@ -37,14 +37,28 @@ struct GameOverView: View {
             .padding(.horizontal, 24)
             .frame(maxWidth: 520)
             Spacer()
-            Button("Back home") { backend.goHome() }
-                .buttonStyle(PillButtonStyle())
-                .padding(24)
-                .frame(maxWidth: 520)
+            VStack(spacing: 12) {
+                AsyncButton(rematchLabel) { await backend.rematch() }
+                    .buttonStyle(PillButtonStyle())
+                    .animation(.snappy, value: room.rematchCode)
+                Button("Back home") { backend.goHome() }
+                    .buttonStyle(PillButtonStyle(primary: false))
+            }
+            .blocksWhileBusy()
+            .padding(24)
+            .frame(maxWidth: 520)
+            .sensoryFeedback(.impact(weight: .medium), trigger: room.rematchCode) { old, new in old == nil && new != nil }
         }
         .overlay { if over.winnerId == backend.uid { Confetti().ignoresSafeArea() } }
         .sensoryFeedback(over.winnerId == backend.uid ? .success : .impact(weight: .medium), trigger: shown) { _, now in now }
         .onAppear { withAnimation(.spring(duration: 0.6, bounce: 0.45)) { shown = true } }
+    }
+
+    /// "Play again" opens a new lobby; once someone has, everyone else joins theirs.
+    private var rematchLabel: String {
+        guard room.rematchCode != nil else { return "Play again" }
+        guard let host = room.rematchBy else { return "Join the rematch" }
+        return "Join \(host)'s rematch"
     }
 }
 

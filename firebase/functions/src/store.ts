@@ -7,11 +7,11 @@
 
 import { DocumentReference, Firestore, Transaction } from "firebase-admin/firestore";
 import { Card } from "./engine/cards.js";
-import { Table } from "./engine/game.js";
+import { Table, isGameOver, nextTable } from "./engine/game.js";
 import * as engine from "./engine/round.js";
 import { RoundState } from "./engine/round.js";
 import type { Room } from "./rooms.js";
-import { PrivateRound, planBotMove, wakeTime } from "./schedule.js";
+import { PrivateRound, nextRoundAtFor, planBotMove, turnDeadlineFor, wakeTime } from "./schedule.js";
 import { secureRng } from "./util.js";
 
 /** What everyone at the table can see about the current round. */
@@ -28,12 +28,18 @@ export interface PublicRound {
   deals: Record<string, number>;
   /** Epoch ms when the deals timer runs out (deals phase only). */
   deadline: number | null;
+  /** Epoch ms when the person whose betting turn it is runs out of time (a bot then takes their seat). */
+  turnDeadline: number | null;
+  /** Epoch ms when the next round is dealt (finished rounds only). */
+  nextRoundAt: number | null;
   result: engine.RoundResult | null;
   /** Cards of players who revealed (finished rounds only). */
   revealedHands: Record<string, Card[]>;
 }
 
-export function publicView(state: RoundState, deadline: number | null): PublicRound {
+export function publicView(
+  state: RoundState, timers: Pick<PrivateRound, "deadline" | "turnDeadline" | "nextRoundAt">,
+): PublicRound {
   const revealed = state.result?.revealed ?? [];
   return {
     roundNumber: state.roundNumber,
@@ -45,7 +51,9 @@ export function publicView(state: RoundState, deadline: number | null): PublicRo
     bossId: state.bossId,
     offers: state.offers,
     deals: state.deals,
-    deadline,
+    deadline: timers.deadline,
+    turnDeadline: timers.turnDeadline ?? null,
+    nextRoundAt: timers.nextRoundAt ?? null,
     result: state.result,
     revealedHands: Object.fromEntries(
       state.players.filter((p) => revealed.includes(p.id)).map((p) => [p.id, p.hand]),
@@ -78,10 +86,17 @@ export function writeRound(
   const deadline = state.phase === "deals" ? ((sameRound ? prev.deadline : null) ?? now + state.timerMs!) : null;
   const botOffers = overrides.botOffers ?? (sameRound ? (prev.botOffers ?? {}) : {});
   const effective = { ...room, ...roomFields } as Room;
-  const priv: PrivateRound = { state, deadline, botOffers, botMove: planBotMove(effective, state, botOffers, now) };
+  const priv: PrivateRound = {
+    state,
+    deadline,
+    botOffers,
+    botMove: planBotMove(effective, state, botOffers, now),
+    turnDeadline: turnDeadlineFor(effective, prev, state, now),
+    nextRoundAt: nextRoundAtFor(effective, prev, state, now),
+  };
   const wakeAt = wakeTime(priv);
   tx.set(privateRef(ref), priv);
-  tx.update(ref, { ...roomFields, round: publicView(state, deadline), wakeAt, updatedAt: now });
+  tx.update(ref, { ...roomFields, round: publicView(state, priv), wakeAt, updatedAt: now });
   return wakeAt;
 }
 
@@ -93,4 +108,22 @@ export function dealRound(
   const state = engine.startRound(table.seats, table.dealerIndex, secureRng, table.roundNumber);
   for (const p of state.players) tx.set(handRef(ref, p.id), { cards: p.hand });
   return writeRound(tx, ref, room, null, state, now, { table, ...roomFields });
+}
+
+/**
+ * After a finished round: applies knockouts, passes the dealer right, and deals the next round —
+ * or ends the game. Call inside a transaction, after all reads. Returns the room's new `wakeAt`.
+ */
+export function advanceTable(
+  tx: Transaction, ref: DocumentReference, room: Room, state: RoundState, now: number,
+): number | null {
+  const outcome = nextTable(state);
+  // Knocked-out players' old hands are deleted; everyone else's are overwritten by the new deal.
+  const stillIn = isGameOver(outcome) ? [] : outcome.seats.map((s) => s.id);
+  for (const p of state.players) if (!stillIn.includes(p.id)) tx.delete(handRef(ref, p.id));
+  if (isGameOver(outcome)) {
+    tx.update(ref, { status: "finished", gameOver: outcome, wakeAt: null, updatedAt: now });
+    return null;
+  }
+  return dealRound(tx, ref, room, outcome, now);
 }

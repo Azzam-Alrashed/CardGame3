@@ -39,10 +39,11 @@ struct Banner: View {
     }
 }
 
-/// Ticks every second; calls `onZero` once when time runs out.
-private struct Countdown: View {
+/// "1:32" in a pill that ticks every second and turns pink near the end; calls `onZero` once when time runs out.
+struct Countdown: View {
     var deadline: Date
-    var onZero: () -> Void
+    var size: CGFloat = 44
+    var onZero: () -> Void = {}
     @State private var fired = false
 
     var body: some View {
@@ -50,9 +51,9 @@ private struct Countdown: View {
             let left = max(0, Int(deadline.timeIntervalSince(context.date).rounded(.up)))
             let hurry = left <= 10
             Text(String(format: "%d:%02d", left / 60, left % 60))
-                .font(.system(size: 44, weight: .black, design: .rounded).monospacedDigit())
+                .font(.system(size: size, weight: .black, design: .rounded).monospacedDigit())
                 .contentTransition(.numericText(countsDown: true))
-                .padding(.horizontal, 22).padding(.vertical, 6)
+                .padding(.horizontal, size / 2).padding(.vertical, size / 7)
                 .background(Capsule().fill(hurry ? Theme.hotPink : .white))
                 .foregroundStyle(hurry ? .white : Theme.ink)
                 // A little heartbeat each second near the end.

@@ -67,7 +67,7 @@ describe.skipIf(!onEmulator)("ticker", () => {
     const r = await room();
     // Both AI players decided; the human dealer is next (or the round already ended).
     expect(r.round.phase === "finished" || r.round.turnId === "u0").toBe(true);
-    if (r.round.phase === "betting") expect(r.wakeAt).toBeNull(); // waiting on a person
+    if (r.round.phase === "betting") expect(r.wakeAt).toBe(now + 45_000); // the person's turn clock
   });
 
   it("the deals timer reveals on its own, with no phone asking", async () => {
@@ -90,7 +90,71 @@ describe.skipIf(!onEmulator)("ticker", () => {
     now = deadline!;
     await tick(db, code);
     expect((await room()).round.result.outcome).toBe("showdown");
+    expect((await room()).wakeAt).toBe(now + 8000); // next round
+  });
+
+  it("running out of betting time hands your seat to a bot, which plays at once", async () => {
+    const r0 = await room();
+    expect(r0.round.turnId).toBe("u1");
+    expect(r0.round.turnDeadline).toBe(now + 45_000);
+    expect(r0.wakeAt).toBe(now + 45_000);
+
+    later(44_000);
+    await tick(db, code); // not yet
+    expect((await room()).away ?? []).toEqual([]);
+
+    later(1000);
+    await tick(db, code);
+    const r = await room();
+    expect(r.away).toEqual(["u1"]);
+    expect(["careful", "balanced", "wild"]).toContain(r.botStyles.u1);
+    expect(r.round.turnId).not.toBe("u1"); // u1's bot already bet or withdrew
+    expect(r.round.turnDeadline).toBeNull(); // an AI player's turn now
+  });
+
+  it("the turn clock keeps running through other changes, and coming back starts a fresh one", async () => {
+    const first = (await room()).round.turnDeadline;
+    later(10_000);
+    await play.setAway(db, "u0", { code, away: true }); // someone else steps away mid-turn
+    expect((await room()).round.turnDeadline).toBe(first);
+
+    await play.setAway(db, "u1", { code, away: true });
+    expect((await room()).round.turnDeadline).toBeNull(); // the bot has the turn
+    await play.setAway(db, "u1", { code, away: false });
+    expect((await room()).round.turnDeadline).toBe(now + 45_000);
+  });
+
+  it("the next round is dealt on its own after the result", async () => {
+    await play.bet(db, "u1", { code, amount: 500 });
+    for (let i = 0; i < 2; i++) { later(3000); await tick(db, code); } // the AI players decide
+    const r1 = (await room()).round;
+    if (r1.phase === "betting") await play.withdraw(db, "u0", { code });
+    const finished = await room();
+    if (finished.round.phase === "deals") {
+      now = (await priv()).deadline!;
+      await tick(db, code);
+    }
+    expect((await room()).round.phase).toBe("finished");
+    expect((await room()).round.nextRoundAt).toBe(now + 8000);
+
+    later(8000);
+    await tick(db, code);
+    expect((await room()).round).toMatchObject({ roundNumber: 2, phase: "betting", dealerId: "u1" });
+  });
+
+  it("a table with nobody actually playing waits for someone to come back", async () => {
+    await play.setAway(db, "u0", { code, away: true });
+    await play.setAway(db, "u1", { code, away: true });
+    for (let i = 0; i < 20 && (await room()).round.phase !== "finished"; i++) {
+      now = Math.max(now + 3000, (await priv()).deadline ?? 0);
+      await tick(db, code);
+    }
+    expect((await room()).round.phase).toBe("finished");
+    expect((await room()).round.nextRoundAt).toBeNull();
     expect((await room()).wakeAt).toBeNull();
+
+    await play.setAway(db, "u0", { code, away: false });
+    expect((await room()).round.nextRoundAt).toBe(now + 8000);
   });
 
   it("a planned move that no longer fits is dropped, not retried forever", async () => {

@@ -22,6 +22,10 @@ struct PublicRound: Decodable, Equatable {
     let deals: [String: Int]
     /// Epoch milliseconds when the deals timer runs out.
     let deadline: Double?
+    /// Epoch milliseconds when the person whose betting turn it is runs out of time (then a bot plays).
+    let turnDeadline: Double?
+    /// Epoch milliseconds when the server deals the next round.
+    let nextRoundAt: Double?
     let result: RoundResult?
     let revealedHands: [String: [Card]]
 
@@ -33,7 +37,14 @@ struct PublicRound: Decodable, Equatable {
         return bossBet - deals.values.reduce(0, +)
     }
 
-    var deadlineDate: Date? { deadline.map { Date(timeIntervalSince1970: $0 / 1000) } }
+    var deadlineDate: Date? { deadline.map(Date.init(epochMs:)) }
+    var turnDeadlineDate: Date? { turnDeadline.map(Date.init(epochMs:)) }
+    var nextRoundDate: Date? { nextRoundAt.map(Date.init(epochMs:)) }
+}
+
+extension Date {
+    /// Dates from the server are epoch milliseconds.
+    init(epochMs: Double) { self.init(timeIntervalSince1970: epochMs / 1000) }
 }
 
 struct RoundResult: Decodable, Equatable {

@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it } from "vitest";
 import { Card } from "./engine/cards.js";
 import { RoundState, placeBet, startRound, withdraw } from "./engine/round.js";
 import type { Room } from "./rooms.js";
-import { PrivateRound, botTiming, dueAction, nextBotAction, planBotMove, wakeTime } from "./schedule.js";
+import {
+  PrivateRound, botTiming, dueAction, nextBotAction, nextRoundAtFor, planBotMove, turnDeadlineFor, wakeTime,
+} from "./schedule.js";
 
 const seats = ["u0", "u1", "ai1", "ai2"].map((id) => ({ id, points: 5000 }));
 const fixedRng = () => 0.5;
@@ -63,6 +65,44 @@ describe("schedule", () => {
     expect(dueAction(p, 600)).toBeNull(); // more than the early-wake slack before the move
     expect(dueAction(p, 900)).toEqual({ kind: "bot", action: bet });
     expect(dueAction(p, 1000)).toEqual({ kind: "timeUp" });
+  });
+
+  it("a person's betting turn gets 45 s; the clock keeps running until the turn passes", () => {
+    const s = fresh(); // u1's turn
+    expect(turnDeadlineFor(room(), null, s, 1000)).toBe(46_000);
+    // Same turn, rewritten later (e.g. someone else stepped away): same deadline.
+    expect(turnDeadlineFor(room(), priv(s, { turnDeadline: 46_000 }), s, 20_000)).toBe(46_000);
+    // The turn passed to an AI player: no clock.
+    const afterU1 = withdraw(s, "u1");
+    expect(turnDeadlineFor(room(), priv(s, { turnDeadline: 46_000 }), afterU1, 20_000)).toBeNull();
+    // u1 is away: their bot plays, no clock.
+    expect(turnDeadlineFor(room({ away: ["u1"] }), null, s, 1000)).toBeNull();
+  });
+
+  it("the next round comes 8 s after a result (4 s after a redeal), only if someone is playing", () => {
+    let s = fresh();
+    for (const id of ["u1", "ai1", "ai2", "u0"]) s = withdraw(s, id);
+    expect(s.result!.outcome).toBe("redeal");
+    expect(nextRoundAtFor(room(), null, s, 1000)).toBe(5000);
+    expect(nextRoundAtFor(room({ away: ["u0", "u1"] }), null, s, 1000)).toBeNull();
+
+    let won = fresh();
+    for (const id of ["u1", "ai1", "ai2"]) won = withdraw(won, id);
+    won = placeBet(won, "u0", 500);
+    expect(nextRoundAtFor(room(), null, won, 1000)).toBe(9000);
+    // Rewritten later in the same finished round: keeps its time.
+    expect(nextRoundAtFor(room(), priv(won, { nextRoundAt: 9000 }), won, 5000)).toBe(9000);
+  });
+
+  it("timers come in order: deals deadline, turn clock, next round, then bots", () => {
+    const betting = fresh();
+    expect(dueAction(priv(betting, { turnDeadline: 100, botMove: { action: bet, at: 50 } }), 100))
+      .toEqual({ kind: "turnTimeout", id: "u1" });
+    let done = fresh();
+    for (const id of ["u1", "ai1", "ai2", "u0"]) done = withdraw(done, id);
+    expect(dueAction(priv(done, { nextRoundAt: 100 }), 99)).toBeNull();
+    expect(dueAction(priv(done, { nextRoundAt: 100 }), 100)).toEqual({ kind: "nextRound" });
+    expect(wakeTime(priv(betting, { turnDeadline: 100, botMove: { action: bet, at: 50 } }))).toBe(50);
   });
 
   it("never looks at anyone's cards to plan", () => {
