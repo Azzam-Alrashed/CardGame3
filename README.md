@@ -23,7 +23,10 @@ The full rules are in **[RULES.md](RULES.md)**.
 - **The table never stalls.** Each betting turn has 45 seconds; when it runs out, a bot takes the seat until you take it back. The next round is dealt on its own.
 - **Play again.** After a game, one tap opens a new lobby with the same AI players, and everyone else gets a **Join rematch** button.
 - **A bot that plays fair.** It sees only its own cards, works out its odds by dealing imaginary hands from the cards it hasn't seen, and bluffs now and then.
+- **Cards you can feel.** The dealer shuffles and deals around the table; your cards land face down and you tap to turn them over. Everyone sees how many cards each player has looked at, so you can bet without looking, or catch someone who did.
+- **A real showdown.** Challengers turn their cards over one at a time, a darbuka drumroll, then the boss, card by card. The crown, the points and close calls ("Won on the suit! ♠ beats ♥") come last. Everyone's reveal plays to the end before the next round, and Skip jumps ahead on your phone.
 - **Know your hand.** Your hand's name ("Pair of Queens") shows under your cards and next to every revealed hand.
+- **Sound.** Chips, cards, little jingles and a darbuka drumroll. Quiet when the phone is on silent, with a speaker button to turn it off.
 - **Safe names.** Offensive names are refused. Long-press any player to report their name or hide it on your phone.
 - **First-launch onboarding** and a **How to play** sheet, also available at the table.
 - **iPhone and iPad** in every orientation.
@@ -35,7 +38,7 @@ The full rules are in **[RULES.md](RULES.md)**.
 | `firebase/functions/` | Backend in TypeScript: the rules engine and the bot (`src/engine/`), plus rooms, rounds and AI players as Cloud Functions |
 | `firebase/firestore.rules` | Security rules: players see only their own room and their own cards |
 | `ios/` | iOS app in SwiftUI (`CardGame3.xcodeproj`) |
-| `assets/` | Logo and wordmark |
+| `assets/` | Logo and wordmark, and the script that builds the sound set (sounds by [Kenney](https://kenney.nl), CC0) |
 | `docs/` | Landing page for GitHub Pages: one static `index.html` plus images in `docs/img/` |
 | `android/` | Android app in Kotlin *(coming soon)* |
 

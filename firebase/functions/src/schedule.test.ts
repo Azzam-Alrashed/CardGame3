@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { Card } from "./engine/cards.js";
-import { RoundState, placeBet, startRound, withdraw } from "./engine/round.js";
+import { RoundState, placeBet, reveal, startRound, withdraw } from "./engine/round.js";
 import type { Room } from "./rooms.js";
 import {
-  PrivateRound, botTiming, dueAction, nextBotAction, nextRoundAtFor, planBotMove, turnDeadlineFor, wakeTime,
+  PrivateRound, botTiming, dueAction, nextBotAction, nextRoundAtFor, planBotMove, revealEndsAtFor, revealMs,
+  turnDeadlineFor, wakeTime,
 } from "./schedule.js";
 
 const seats = ["u0", "u1", "ai1", "ai2"].map((id) => ({ id, points: 5000 }));
@@ -92,6 +93,29 @@ describe("schedule", () => {
     expect(nextRoundAtFor(room(), null, won, 1000)).toBe(9000);
     // Rewritten later in the same finished round: keeps its time.
     expect(nextRoundAtFor(room(), priv(won, { nextRoundAt: 9000 }), won, 5000)).toBe(9000);
+  });
+
+  it("a showdown's reveal gets time to play on every phone before the next round", () => {
+    const showdown = (revealed: number) =>
+      ({ outcome: "showdown", winnerId: "u0", revealed: Array.from({ length: revealed }, (_, i) => `p${i}`), deltas: {} }) as const;
+    expect(revealMs(showdown(2))).toBe(6300);
+    expect(revealMs(showdown(4))).toBe(8300);
+    expect(revealMs(showdown(13))).toBe(10_300); // challengers share 5 s at most
+    expect(revealMs({ outcome: "uncontested", winnerId: "u0", revealed: [], deltas: {} })).toBe(0);
+
+    // u1 and ai1 enter, ai1 is the boss and reveals: two hands to show.
+    let s = fresh();
+    s = placeBet(s, "u1", 500);
+    s = placeBet(s, "ai1", 1000);
+    s = withdraw(withdraw(s, "ai2"), "u0");
+    s = reveal(s, "ai1");
+    expect(s.result!.outcome).toBe("showdown");
+    expect(revealEndsAtFor(null, s, 1000)).toBe(7300);
+    expect(nextRoundAtFor(room(), null, s, 1000)).toBe(15_300);
+    // Rewritten later in the same round: both keep their times.
+    const later = priv(s, { revealEndsAt: 7300, nextRoundAt: 15_300 });
+    expect(revealEndsAtFor(later, s, 5000)).toBe(7300);
+    expect(nextRoundAtFor(room(), later, s, 5000)).toBe(15_300);
   });
 
   it("timers come in order: deals deadline, turn clock, next round, then bots", () => {

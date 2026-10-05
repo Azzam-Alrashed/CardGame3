@@ -1,6 +1,6 @@
 import Foundation
 
-/// What a 4-card hand is, for showing its name ("Pair of Kings").
+/// What a hand is, for showing its name ("Pair of Kings"). Also works on the 1–3 cards turned over so far.
 /// Mirrors `evaluateHand` in firebase/functions/src/engine/hands.ts; the server decides who wins.
 struct HandValue: Equatable {
     enum Category: Int, Comparable {
@@ -13,9 +13,11 @@ struct HandValue: Equatable {
     let groups: [Int]
     /// Ranks of the leftover single cards, highest first.
     let kickers: [Int]
+    /// Strength of the best suit among the highest-ranked cards (♠ 4, ♥ 3, ♦ 2, ♣ 1): the last tiebreak.
+    let topSuit: Int
 
     init?(_ cards: [Card]) {
-        guard cards.count == 4 else { return nil }
+        guard (1...4).contains(cards.count) else { return nil }
         let counts = Dictionary(grouping: cards, by: \.rank).mapValues(\.count)
         // Bigger groups first, then higher rank.
         let byGroup = counts.sorted { $0.value != $1.value ? $0.value > $1.value : $0.key > $1.key }
@@ -26,6 +28,31 @@ struct HandValue: Equatable {
         case 3: category = .threeOfAKind
         case 2: category = groups.count == 2 ? .twoPairs : .onePair
         default: category = .highCard
+        }
+        let topRank = cards.map(\.rank).max() ?? 0
+        topSuit = cards.filter { $0.rank == topRank }.map { Self.suitStrength[$0.suit] ?? 0 }.max() ?? 0
+    }
+
+    static let suitStrength = ["S": 4, "H": 3, "D": 2, "C": 1]
+    static let suitSymbol = [4: "♠", 3: "♥", 2: "♦", 1: "♣"]
+
+    /// Which step of the tiebreak separates two hands, in the server's order (`compareHands` in hands.ts).
+    enum Decider { case category, group, kicker, suit }
+
+    func decider(against other: HandValue) -> Decider {
+        if category != other.category { return .category }
+        if groups != other.groups { return .group }
+        if kickers != other.kickers { return .kicker }
+        return .suit
+    }
+
+    /// Whether this hand beats the other. There is never a tie between hands from one deck.
+    func beats(_ other: HandValue) -> Bool {
+        switch decider(against: other) {
+        case .category: category > other.category
+        case .group: zip(groups, other.groups).first { $0.0 != $0.1 }.map { $0.0 > $0.1 } ?? false
+        case .kicker: zip(kickers, other.kickers).first { $0.0 != $0.1 }.map { $0.0 > $0.1 } ?? false
+        case .suit: topSuit > other.topSuit
         }
     }
 

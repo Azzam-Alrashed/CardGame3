@@ -51,6 +51,7 @@ struct GameOverView: View {
         }
         .overlay { if over.winnerId == backend.uid { Confetti().ignoresSafeArea() } }
         .sensoryFeedback(over.winnerId == backend.uid ? .success : .impact(weight: .medium), trigger: shown) { _, now in now }
+        .soundFeedback(.fanfare, trigger: shown) { _, now in now }
         .onAppear { withAnimation(.spring(duration: 0.6, bounce: 0.45)) { shown = true } }
     }
 

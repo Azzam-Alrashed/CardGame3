@@ -39,6 +39,8 @@ struct Room: Decodable, Equatable {
     let away: [String]?
     /// AI players added by the host; always played by a bot.
     let aiPlayers: [String]?
+    /// How many of their cards each player has looked at this round (a tell everyone can see).
+    let peeks: [String: Int]?
     /// After the game: the new lobby someone opened to play again, and who opened it.
     let rematchCode: String?
     let rematchBy: String?
@@ -55,9 +57,10 @@ struct Room: Decodable, Equatable {
     }
 
     /// Points including the result of a just-finished round (the table updates at the next deal).
-    func points(of uid: String) -> Int {
+    /// `settled: false` leaves that result out while its showdown is still being revealed.
+    func points(of uid: String, settled: Bool = true) -> Int {
         let base = table?.seats.first { $0.id == uid }?.points ?? 0
-        return base + (round?.result?.deltas[uid] ?? 0)
+        return base + (settled ? round?.result?.deltas[uid] ?? 0 : 0)
     }
 
     func isAI(_ uid: String) -> Bool {

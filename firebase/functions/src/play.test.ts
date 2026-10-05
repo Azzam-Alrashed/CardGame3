@@ -1,9 +1,10 @@
 // Runs against the Firestore emulator: npm run test:emulator
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { getApps, initializeApp } from "firebase-admin/app";
 import { Firestore, getFirestore } from "firebase-admin/firestore";
 import { createRoom, joinRoom, startGame } from "./rooms.js";
 import * as play from "./play.js";
+import { clock } from "./schedule.js";
 
 const onEmulator = !!process.env.FIRESTORE_EMULATOR_HOST;
 
@@ -27,6 +28,15 @@ describe.skipIf(!onEmulator)("playing a round", () => {
     for (let i = 1; i < 4; i++) await joinRoom(db, `u${i}`, { code, name: `P${i}` });
     await startGame(db, "u0", { code });
   });
+
+  afterEach(() => {
+    clock.now = () => Date.now();
+  });
+
+  /** Jumps past the showdown's reveal, after which anyone may deal the next round. */
+  const afterReveal = () => {
+    clock.now = () => Date.now() + 60_000;
+  };
 
   /** u1 bets 500, u2 bets 1000 (boss), u3 and u0 withdraw. */
   async function toDeals() {
@@ -112,11 +122,45 @@ describe.skipIf(!onEmulator)("playing a round", () => {
   it("next round passes the dealer right, and double calls are harmless", async () => {
     await toDeals();
     await play.reveal(db, "u2", { code });
+    afterReveal();
     await expect(play.nextRound(db, "u0", { code, roundNumber: 2 })).resolves.toBeUndefined();
     await play.nextRound(db, "u0", { code, roundNumber: 1 });
     await play.nextRound(db, "u3", { code, roundNumber: 1 }); // late duplicate: ignored
     const r = await round();
     expect(r).toMatchObject({ roundNumber: 2, phase: "betting", dealerId: "u1", turnId: "u2" });
+  });
+
+  it("nobody can deal the next round while the reveal is still playing", async () => {
+    await toDeals();
+    await play.reveal(db, "u2", { code });
+    const r = await round();
+    // Two hands to show: 6.3 s of reveal, then the result stays up 8 s.
+    expect(r.revealEndsAt! - Date.now()).toBeGreaterThan(5000);
+    expect(r.nextRoundAt).toBe(r.revealEndsAt! + 8000);
+    await play.nextRound(db, "u0", { code, roundNumber: 1 }); // too early: ignored
+    expect((await round()).roundNumber).toBe(1);
+    afterReveal();
+    await play.nextRound(db, "u0", { code, roundNumber: 1 });
+    expect((await round()).roundNumber).toBe(2);
+  });
+
+  it("peeks: everyone sees how many cards each player has looked at, until the next deal", async () => {
+    expect((await db.doc(`rooms/${code}/hands/u1`).get()).data()).toMatchObject({ round: 1 });
+    await play.peek(db, "u1", { code, roundNumber: 1, count: 2 });
+    await play.peek(db, "u1", { code, roundNumber: 1, count: 1 }); // counts never go down
+    await play.peek(db, "u2", { code, roundNumber: 1, count: 4 });
+    await play.peek(db, "u3", { code, roundNumber: 0, count: 1 }); // late call from an earlier round
+    expect((await room()).peeks).toEqual({ u1: 2, u2: 4 });
+    await expect(play.peek(db, "u1", { code, roundNumber: 1, count: 5 })).rejects.toThrow(/1 to 4/);
+    await expect(play.peek(db, "u1", { code, roundNumber: 1, count: "2" })).rejects.toThrow(/1 to 4/);
+    await expect(play.peek(db, "stranger", { code, roundNumber: 1, count: 1 })).rejects.toThrow(/not in this room/);
+
+    await toDeals();
+    await play.reveal(db, "u2", { code });
+    afterReveal();
+    await play.nextRound(db, "u0", { code, roundNumber: 1 });
+    expect((await room()).peeks).toEqual({});
+    expect((await db.doc(`rooms/${code}/hands/u1`).get()).data()).toMatchObject({ round: 2 });
   });
 
   it("game ends when fewer than 4 players have points", async () => {
@@ -126,6 +170,7 @@ describe.skipIf(!onEmulator)("playing a round", () => {
     const priv = (await privateDoc().get()).data()!;
     priv.state.players = priv.state.players.map((p: { id: string }) => (p.id === "u3" ? { ...p, points: 0 } : p));
     await privateDoc().set(priv);
+    afterReveal();
     await play.nextRound(db, "u0", { code, roundNumber: 1 });
     const r = await room();
     expect(r.status).toBe("finished");

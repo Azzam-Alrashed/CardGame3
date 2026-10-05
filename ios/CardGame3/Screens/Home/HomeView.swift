@@ -68,10 +68,13 @@ struct HomeView: View {
             }
         }
         .overlay(alignment: .topTrailing) {
-            Button { showRules = true } label: { Image(systemName: "questionmark") }
-                .buttonStyle(CircleButtonStyle())
-                .accessibilityLabel("How to play")
-                .padding(.trailing, 20)
+            HStack(spacing: 10) {
+                SoundToggle()
+                Button { showRules = true } label: { Image(systemName: "questionmark") }
+                    .buttonStyle(CircleButtonStyle())
+                    .accessibilityLabel("How to play")
+            }
+            .padding(.trailing, 20)
         }
         .sheet(isPresented: $showRules) {
             HowToPlayView { withAnimation { seenOnboarding = false } }
