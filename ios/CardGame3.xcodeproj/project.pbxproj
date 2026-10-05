@@ -18,12 +18,14 @@
 		48378A984058994AA9DD008B /* Room.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18126C2AFF222828E0F7C23E /* Room.swift */; };
 		70E9735CA1F8491CFCC69A63 /* PlayingCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEAE8337DFD8DA0B5C611C40 /* PlayingCard.swift */; };
 		77A4C5A5F9E8D6EC2B798240 /* Round.swift in Sources */ = {isa = PBXBuildFile; fileRef = 219EFDA9FEB32CA9AAB644C8 /* Round.swift */; };
-		A1C0FFEE00000000000000B4 /* Hand.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE00000000000000F4 /* Hand.swift */; };
 		82DBE133A8B3A5AFD4C556F4 /* Blob.swift in Sources */ = {isa = PBXBuildFile; fileRef = F419F18835418FA4DC00D6E5 /* Blob.swift */; };
 		854ADF78BD4447F85BE1DF7F /* PlayersStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EC955BCD2C924B7BE292978 /* PlayersStrip.swift */; };
-		A1C0FFEE00000000000000B3 /* PlayerMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE00000000000000F3 /* PlayerMenu.swift */; };
 		8B71451D43E6E7BD7812566A /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 6D301614DCB701463A56638D /* FirebaseFunctions */; };
 		93A569F341B59386D6EAE88C /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 63A2A68B6A6A9A390BEA26FD /* FirebaseAuth */; };
+		A1C0FFEE00000000000000B1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE00000000000000F1 /* PrivacyInfo.xcprivacy */; };
+		A1C0FFEE00000000000000B2 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE00000000000000F2 /* InfoPlist.xcstrings */; };
+		A1C0FFEE00000000000000B3 /* PlayerMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE00000000000000F3 /* PlayerMenu.swift */; };
+		A1C0FFEE00000000000000B4 /* Hand.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE00000000000000F4 /* Hand.swift */; };
 		AD61BB3861CD3FC9900204BA /* ActionPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C773EC62FB002C1E72BCAD5 /* ActionPanel.swift */; };
 		B53C30B2B6C4E3C5E03FD1F4 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8642D32F7AC3B7E63FC2076 /* GameView.swift */; };
 		C6AEB174161D6A68D48D757D /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B855D02B3042ADB41DB1690A /* HomeView.swift */; };
@@ -36,8 +38,6 @@
 		F1AA55639FA0FD270F3AF635 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A06A6AD5F067878B6246E595 /* RootView.swift */; };
 		F4E51F723089D2A0BBDC7358 /* GameOverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C366499AFE220F6BD2CCF79 /* GameOverView.swift */; };
 		FC7024DB3868843DB4D0D15A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 183CE432C22D8FBE40FCB2BD /* GoogleService-Info.plist */; };
-		A1C0FFEE00000000000000B1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE00000000000000F1 /* PrivacyInfo.xcprivacy */; };
-		A1C0FFEE00000000000000B2 /* InfoPlist.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE00000000000000F2 /* InfoPlist.xcstrings */; };
 		FE0069AEE0F332F6244A099E /* Backend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B2080C0FFCEE366B01966A /* Backend.swift */; };
 /* End PBXBuildFile section */
 
@@ -46,15 +46,11 @@
 		0B0A4D1E5C6F7A8B9C0D1E32 /* HowToPlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToPlayView.swift; sourceTree = "<group>"; };
 		18126C2AFF222828E0F7C23E /* Room.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Room.swift; sourceTree = "<group>"; };
 		183CE432C22D8FBE40FCB2BD /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
-		A1C0FFEE00000000000000F1 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		A1C0FFEE00000000000000F2 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		1DA4AA556A4D5AAF44BA3BA2 /* Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatting.swift; sourceTree = "<group>"; };
 		219EFDA9FEB32CA9AAB644C8 /* Round.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Round.swift; sourceTree = "<group>"; };
-		A1C0FFEE00000000000000F4 /* Hand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hand.swift; sourceTree = "<group>"; };
 		2C366499AFE220F6BD2CCF79 /* GameOverView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameOverView.swift; sourceTree = "<group>"; };
 		30251E8A644CE59D006203CF /* AdaptiveSplit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdaptiveSplit.swift; sourceTree = "<group>"; };
 		4EC955BCD2C924B7BE292978 /* PlayersStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayersStrip.swift; sourceTree = "<group>"; };
-		A1C0FFEE00000000000000F3 /* PlayerMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerMenu.swift; sourceTree = "<group>"; };
 		52913B1B8495B55869C9E67F /* Rules.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Rules.swift; sourceTree = "<group>"; };
 		58872C8313076A69411EAE1E /* CardGame3.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CardGame3.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5FC696ACAC3652E0C8506740 /* Controls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Controls.swift; sourceTree = "<group>"; };
@@ -63,6 +59,10 @@
 		93B3DF1B9A5F2E9EBD1F7365 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9C773EC62FB002C1E72BCAD5 /* ActionPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActionPanel.swift; sourceTree = "<group>"; };
 		A06A6AD5F067878B6246E595 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		A1C0FFEE00000000000000F1 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A1C0FFEE00000000000000F2 /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
+		A1C0FFEE00000000000000F3 /* PlayerMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerMenu.swift; sourceTree = "<group>"; };
+		A1C0FFEE00000000000000F4 /* Hand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Hand.swift; sourceTree = "<group>"; };
 		B287FECECB17A831CA1B851A /* LobbyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LobbyView.swift; sourceTree = "<group>"; };
 		B3FB7744D3FC991BE3400A40 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		B855D02B3042ADB41DB1690A /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
@@ -332,7 +332,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 6QYT6GJB4Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Muda;
@@ -344,7 +344,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.azzamalrashed.cardgame3;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
@@ -420,7 +420,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_TEAM = 6QYT6GJB4Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Muda;
@@ -432,7 +432,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.azzamalrashed.cardgame3;
 				SDKROOT = iphoneos;
 				SWIFT_VERSION = 5.0;
