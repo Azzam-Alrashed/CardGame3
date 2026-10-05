@@ -23,6 +23,7 @@ The full rules are in **[RULES.md](RULES.md)**.
 - **The table never stalls.** Each betting turn has 45 seconds; when it runs out, a bot takes the seat until you take it back. The next round is dealt on its own.
 - **Play again.** After a game, one tap opens a new lobby with the same AI players, and everyone else gets a **Join rematch** button.
 - **A bot that plays fair.** It sees only its own cards, works out its odds by dealing imaginary hands from the cards it hasn't seen, and bluffs now and then.
+- **Cards you can feel.** The dealer shuffles and deals around the table; your cards land face down and you tap to turn them over. Everyone sees how many cards each player has looked at, so you can bet without looking, or catch someone who did.
 - **Know your hand.** Your hand's name ("Pair of Queens") shows under your cards and next to every revealed hand.
 - **Sound.** Chips, cards, little jingles and a darbuka drumroll. Quiet when the phone is on silent, with a speaker button to turn it off.
 - **Safe names.** Offensive names are refused. Long-press any player to report their name or hide it on your phone.

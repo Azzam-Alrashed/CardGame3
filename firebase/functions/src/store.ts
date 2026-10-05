@@ -2,7 +2,7 @@
 //
 // Storage per room:
 //   rooms/{code}                 public: room + `round` (everything players may see)
-//   rooms/{code}/hands/{uid}     one player's 4 cards, readable only by that player
+//   rooms/{code}/hands/{uid}     one player's 4 cards and the round they're for, readable only by that player
 //   rooms/{code}/private/round   full engine state including every hand; never readable by clients
 
 import { DocumentReference, Firestore, Transaction } from "firebase-admin/firestore";
@@ -100,14 +100,17 @@ export function writeRound(
   return wakeAt;
 }
 
-/** Deals a new round for the table and writes all docs. Call inside a transaction, after all reads. */
+/**
+ * Deals a new round for the table and writes all docs. Call inside a transaction, after all reads.
+ * Everyone's cards start face down again (`peeks` is cleared).
+ */
 export function dealRound(
   tx: Transaction, ref: DocumentReference, room: Room, table: Table, now: number,
   roomFields: Record<string, unknown> = {},
 ): number | null {
   const state = engine.startRound(table.seats, table.dealerIndex, secureRng, table.roundNumber);
-  for (const p of state.players) tx.set(handRef(ref, p.id), { cards: p.hand });
-  return writeRound(tx, ref, room, null, state, now, { table, ...roomFields });
+  for (const p of state.players) tx.set(handRef(ref, p.id), { cards: p.hand, round: state.roundNumber });
+  return writeRound(tx, ref, room, null, state, now, { table, peeks: {}, ...roomFields });
 }
 
 /**

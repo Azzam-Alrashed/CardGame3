@@ -101,6 +101,24 @@ describe.skipIf(!onEmulator)("playing a round", () => {
     expect(r).toMatchObject({ roundNumber: 2, phase: "betting", dealerId: "u1", turnId: "u2" });
   });
 
+  it("peeks: everyone sees how many cards each player has looked at, until the next deal", async () => {
+    expect((await db.doc(`rooms/${code}/hands/u1`).get()).data()).toMatchObject({ round: 1 });
+    await play.peek(db, "u1", { code, roundNumber: 1, count: 2 });
+    await play.peek(db, "u1", { code, roundNumber: 1, count: 1 }); // counts never go down
+    await play.peek(db, "u2", { code, roundNumber: 1, count: 4 });
+    await play.peek(db, "u3", { code, roundNumber: 0, count: 1 }); // late call from an earlier round
+    expect((await room()).peeks).toEqual({ u1: 2, u2: 4 });
+    await expect(play.peek(db, "u1", { code, roundNumber: 1, count: 5 })).rejects.toThrow(/1 to 4/);
+    await expect(play.peek(db, "u1", { code, roundNumber: 1, count: "2" })).rejects.toThrow(/1 to 4/);
+    await expect(play.peek(db, "stranger", { code, roundNumber: 1, count: 1 })).rejects.toThrow(/not in this room/);
+
+    await toDeals();
+    await play.reveal(db, "u2", { code });
+    await play.nextRound(db, "u0", { code, roundNumber: 1 });
+    expect((await room()).peeks).toEqual({});
+    expect((await db.doc(`rooms/${code}/hands/u1`).get()).data()).toMatchObject({ round: 2 });
+  });
+
   it("game ends when fewer than 4 players have points", async () => {
     await toDeals();
     await play.reveal(db, "u2", { code });

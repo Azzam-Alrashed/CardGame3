@@ -40,6 +40,8 @@ export interface Room {
   wakeAt?: number | null;
   /** Epoch ms of the last change; idle rooms are cleaned up. */
   updatedAt?: number;
+  /** How many of their cards each player has looked at this round (everyone sees it, like a tell). */
+  peeks?: Record<string, number>;
   /** After the game: the code of the new lobby someone opened to play again, and who opened it. */
   rematchCode?: string;
   rematchBy?: string;

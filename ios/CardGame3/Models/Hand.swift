@@ -1,6 +1,6 @@
 import Foundation
 
-/// What a 4-card hand is, for showing its name ("Pair of Kings").
+/// What a hand is, for showing its name ("Pair of Kings"). Also works on the 1–3 cards turned over so far.
 /// Mirrors `evaluateHand` in firebase/functions/src/engine/hands.ts; the server decides who wins.
 struct HandValue: Equatable {
     enum Category: Int, Comparable {
@@ -15,7 +15,7 @@ struct HandValue: Equatable {
     let kickers: [Int]
 
     init?(_ cards: [Card]) {
-        guard cards.count == 4 else { return nil }
+        guard (1...4).contains(cards.count) else { return nil }
         let counts = Dictionary(grouping: cards, by: \.rank).mapValues(\.count)
         // Bigger groups first, then higher rank.
         let byGroup = counts.sorted { $0.value != $1.value ? $0.value > $1.value : $0.key > $1.key }

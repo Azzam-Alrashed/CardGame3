@@ -40,6 +40,8 @@
 		FC7024DB3868843DB4D0D15A /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 183CE432C22D8FBE40FCB2BD /* GoogleService-Info.plist */; };
 		FE0069AEE0F332F6244A099E /* Backend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73B2080C0FFCEE366B01966A /* Backend.swift */; };
 		A1C0FFEE00000000000000B5 /* Sound.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE00000000000000F5 /* Sound.swift */; };
+		A1C0FFEE00000000000000B6 /* Choreography.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE00000000000000F6 /* Choreography.swift */; };
+		A1C0FFEE00000000000000B7 /* DealLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1C0FFEE00000000000000F7 /* DealLayer.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -74,6 +76,8 @@
 		F934401FEB674959E15E4F60 /* MyHand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyHand.swift; sourceTree = "<group>"; };
 		FEAE8337DFD8DA0B5C611C40 /* PlayingCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayingCard.swift; sourceTree = "<group>"; };
 		A1C0FFEE00000000000000F5 /* Sound.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sound.swift; sourceTree = "<group>"; };
+		A1C0FFEE00000000000000F6 /* Choreography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Choreography.swift; sourceTree = "<group>"; };
+		A1C0FFEE00000000000000F7 /* DealLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DealLayer.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -110,6 +114,7 @@
 		24925EE07435B29D26C2D0FE /* Game */ = {
 			isa = PBXGroup;
 			children = (
+				A1C0FFEE00000000000000F7 /* DealLayer.swift */,
 				9C773EC62FB002C1E72BCAD5 /* ActionPanel.swift */,
 				C526DCF21721DCB8B6EE8526 /* Banner.swift */,
 				2C366499AFE220F6BD2CCF79 /* GameOverView.swift */,
@@ -154,6 +159,7 @@
 		6AD25688BFA41990AD1ADD7F /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				A1C0FFEE00000000000000F6 /* Choreography.swift */,
 				18126C2AFF222828E0F7C23E /* Room.swift */,
 				219EFDA9FEB32CA9AAB644C8 /* Round.swift */,
 				A1C0FFEE00000000000000F4 /* Hand.swift */,
@@ -299,6 +305,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A1C0FFEE00000000000000B7 /* DealLayer.swift in Sources */,
+				A1C0FFEE00000000000000B6 /* Choreography.swift in Sources */,
 				A1C0FFEE00000000000000B5 /* Sound.swift in Sources */,
 				AD61BB3861CD3FC9900204BA /* ActionPanel.swift in Sources */,
 				0F2FC0DEFC1B8EA4B0ECF08E /* AdaptiveSplit.swift in Sources */,

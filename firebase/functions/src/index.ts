@@ -39,6 +39,7 @@ export const answerOffer = onCall((req) => play.answerOffer(db, uidOf(req), req.
 export const reveal = onCall((req) => play.reveal(db, uidOf(req), req.data ?? {}));
 export const timeUp = onCall((req) => play.timeUp(db, uidOf(req), req.data ?? {}));
 export const nextRound = onCall((req) => play.nextRound(db, uidOf(req), req.data ?? {}));
+export const peek = onCall((req) => play.peek(db, uidOf(req), req.data ?? {}));
 export const setAway = onCall((req) => play.setAway(db, uidOf(req), req.data ?? {}));
 
 // MARK: Background work (see ticker.ts)

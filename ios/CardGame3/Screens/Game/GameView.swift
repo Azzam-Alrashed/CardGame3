@@ -5,16 +5,19 @@ struct GameView: View {
     @Environment(Backend.self) private var backend
     @State private var confirmLeave = false
     @State private var showRules = false
+    @State private var dealSpots = DealSpots()
 
     var body: some View {
         // The room can disappear (leaving, "Back home") a frame before the screen switches.
         if let room = backend.room, let over = room.gameOver {
             GameOverView(room: room, over: over)
         } else if let room = backend.room, let round = room.round {
+            let me = backend.uid ?? ""
+            let clock = backend.dealClock
             AdaptiveSplit {
                 VStack(spacing: 0) {
                     header(room, round)
-                    PlayersStrip(room: room, round: round, me: backend.uid)
+                    PlayersStrip(room: room, round: round, me: backend.uid, clock: clock, myFlips: backend.flipped.count)
                     Spacer(minLength: 8)
                     // Results can be tall; scroll them when the screen is short (landscape).
                     ViewThatFits(in: .vertical) {
@@ -26,9 +29,20 @@ struct GameView: View {
             } side: {
                 VStack(spacing: 0) {
                     Spacer(minLength: 0)
-                    MyHand(cards: backend.myCards, revealed: round.revealedHands[backend.uid ?? ""] != nil)
+                    MyHand(
+                        cards: backend.myCards,
+                        inRound: room.isStillIn(me),
+                        ready: backend.myCardsRound.map { $0 == round.roundNumber } ?? !backend.myCards.isEmpty,
+                        // A bot holding my seat looks at everything; after the round there's nothing to hide.
+                        allFaceUp: round.phase == .finished || room.isAway(me),
+                        clock: clock
+                    )
                     ActionPanel(room: room, round: round)
                 }
+            }
+            .environment(\.dealSpots, dealSpots)
+            .overlay {
+                if let clock { DealLayer(clock: clock, me: backend.uid, spots: dealSpots) }
             }
             .overlay {
                 if round.phase == .finished, round.result?.winnerId == backend.uid {
@@ -84,10 +98,8 @@ struct GameView: View {
     /// What everyone at the table hears when the round changes: chips, folds, offers, the boss, the result.
     private func playTableSounds(_ old: PublicRound, _ new: PublicRound, room: Room) {
         let sound = SoundPlayer.shared
-        guard old.roundNumber == new.roundNumber else {
-            sound.play(.shuffle)
-            return
-        }
+        // A new deal sounds from DealLayer.
+        guard old.roundNumber == new.roundNumber else { return }
         for (uid, amount) in new.bets where old.bets[uid] != amount {
             let points = room.table?.seats.first { $0.id == uid }?.points ?? 0
             sound.play(amount >= points ? .allIn : amount >= 2_000 ? .chipsBig : amount >= 1_000 ? .chips : .chip)

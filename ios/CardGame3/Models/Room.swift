@@ -39,6 +39,8 @@ struct Room: Decodable, Equatable {
     let away: [String]?
     /// AI players added by the host; always played by a bot.
     let aiPlayers: [String]?
+    /// How many of their cards each player has looked at this round (a tell everyone can see).
+    let peeks: [String: Int]?
     /// After the game: the new lobby someone opened to play again, and who opened it.
     let rematchCode: String?
     let rematchBy: String?

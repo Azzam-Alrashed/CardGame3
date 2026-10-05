@@ -12,6 +12,13 @@ final class Backend {
     private(set) var room: Room?
     /// This player's 4 cards for the current round (readable only by them).
     private(set) var myCards: [Card] = []
+    /// The round `myCards` were dealt for: the room and the cards arrive separately after a deal.
+    private(set) var myCardsRound: Int?
+    /// When this phone saw the current round dealt, to animate the deal. Nil when the round was
+    /// already dealt as we started listening (opening the app mid-round): nothing to animate.
+    private(set) var dealtAt: (round: Int, date: Date)?
+    /// Which of my cards (by position) I've turned over this round. Kept across launches.
+    private(set) var flipped: Set<Int> = []
     var errorMessage: String?
 
     var playerName: String {
@@ -26,6 +33,8 @@ final class Backend {
     private var timeUpSent: Int?
     /// True while this player is leaving a room on purpose (so losing access isn't news).
     private var leaving = false
+    /// Waits for flips to settle before telling the table, so flipping all four is one call.
+    private var peekTask: Task<Void, Never>?
 
     init() {
         playerName = UserDefaults.standard.string(forKey: "playerName") ?? ""
@@ -198,6 +207,41 @@ final class Backend {
         await roundCall("nextRound", ["roundNumber": number])
     }
 
+    // MARK: Looking at cards
+
+    /// Turns over some of my cards. The table sees how many I've looked at (their small cards lift).
+    func flip(_ cards: [Int]) {
+        guard let code = room?.code, let round = room?.round?.roundNumber else { return }
+        let before = flipped.count
+        flipped.formUnion(cards)
+        guard flipped.count > before else { return }
+        UserDefaults.standard.set(["\(code):\(round)": Array(flipped)], forKey: "flipped")
+        peekTask?.cancel()
+        peekTask = Task {
+            try? await Task.sleep(for: .milliseconds(400))
+            guard !Task.isCancelled else { return }
+            await roundCall("peek", ["roundNumber": round, "count": flipped.count], quiet: true)
+        }
+    }
+
+    /// The deal this phone is animating for the current round, if any.
+    var dealClock: DealClock? {
+        guard let round = room?.round, let dealt = dealtAt, dealt.round == round.roundNumber,
+              let seats = room?.table?.seats.map(\.id) else { return nil }
+        return DealClock(timeline: DealTimeline(seats: seats, dealerId: round.dealerId), start: dealt.date, round: dealt.round)
+    }
+
+    /// Notes when a new round is dealt (to animate it) and picks up which cards I'd already turned over.
+    private func roomChanged(from old: Room?, to new: Room?) {
+        guard let new, let round = new.round else { return }
+        if round.roundNumber != old?.round?.roundNumber {
+            // The first snapshot after listening shows a round already in progress: nothing to animate.
+            if old != nil { dealtAt = (round.roundNumber, .now) }
+            let saved = UserDefaults.standard.dictionary(forKey: "flipped")?["\(new.code):\(round.roundNumber)"] as? [Int]
+            flipped = Set(saved ?? [])
+        }
+    }
+
     private func roundCall(_ name: String, _ extra: [String: Any] = [:], quiet: Bool = false) async {
         guard let code = room?.code else { return }
         var data = extra
@@ -235,7 +279,9 @@ final class Backend {
                         return
                     }
                     // A missing document means the room was deleted.
-                    self.room = try? snapshot?.data(as: Room.self)
+                    let room = try? snapshot?.data(as: Room.self)
+                    self.roomChanged(from: self.room, to: room)
+                    self.room = room
                 }
             }
         guard let uid else { return }
@@ -243,11 +289,13 @@ final class Backend {
             .collection("hands").document(uid)
             .addSnapshotListener { [weak self] snapshot, _ in
                 Task { @MainActor in
-                    let cards = snapshot?.data()?["cards"] as? [[String: Any]] ?? []
+                    let data = snapshot?.data()
+                    let cards = data?["cards"] as? [[String: Any]] ?? []
                     self?.myCards = cards.compactMap { c in
                         guard let rank = c["rank"] as? Int, let suit = c["suit"] as? String else { return nil }
                         return Card(rank: rank, suit: suit)
                     }
+                    self?.myCardsRound = data?["round"] as? Int
                 }
             }
     }
@@ -259,6 +307,10 @@ final class Backend {
         handListener = nil
         room = nil
         myCards = []
+        myCardsRound = nil
+        dealtAt = nil
+        flipped = []
+        peekTask?.cancel()
         UserDefaults.standard.removeObject(forKey: "roomCode")
     }
 

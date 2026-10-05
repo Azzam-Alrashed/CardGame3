@@ -4,13 +4,18 @@ struct PlayersStrip: View {
     var room: Room
     var round: PublicRound
     var me: String?
+    /// The deal this phone is animating, if any.
+    var clock: DealClock?
+    /// How many of my cards I've turned over (shown before the server has it).
+    var myFlips = 0
 
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 14) {
                     ForEach(room.players) { player in
-                        PlayerChip(room: room, round: round, uid: player.uid, isMe: player.uid == me)
+                        PlayerChip(room: room, round: round, uid: player.uid, isMe: player.uid == me,
+                                   clock: clock, myFlips: myFlips)
                             .playerMenu(player.uid, in: room)
                             .id(player.uid)
                     }
@@ -19,6 +24,7 @@ struct PlayersStrip: View {
                 .padding(.vertical, 16)
                 .animation(.spring(duration: 0.4, bounce: 0.4), value: round)
             }
+            .dealSpot(.strip)
             // Keep whoever is acting in view on a crowded table.
             .onChange(of: round.turnId ?? round.bossId, initial: true) { _, uid in
                 guard let uid else { return }
@@ -33,39 +39,15 @@ private struct PlayerChip: View {
     var round: PublicRound
     var uid: String
     var isMe: Bool
+    var clock: DealClock?
+    var myFlips: Int
 
     var body: some View {
         let out = !room.isStillIn(uid)
-        let isTurn = round.turnId == uid
         VStack(spacing: 4) {
-            ZStack(alignment: .topTrailing) {
-                Blob(
-                    color: Theme.color(forSeat: room.seat(of: uid)),
-                    size: 56,
-                    mood: mood,
-                    hair: round.bossId == uid
-                )
-                .background { if isTurn { TurnPulse() } }
-                .overlay {
-                    if isTurn, let deadline = round.turnDeadlineDate {
-                        TurnClockRing(deadline: deadline)
-                    } else {
-                        Circle().strokeBorder(.white, lineWidth: isTurn ? 4 : 0)
-                    }
-                }
-                .scaleEffect(isTurn ? 1.08 : 1)
-                if room.isAway(uid) || room.isAI(uid) {
-                    Text("🤖").font(.system(size: 16))
-                        .frame(width: 26, height: 26)
-                        .background(Circle().fill(.white))
-                        .offset(x: -36, y: 34)
-                }
-                if round.dealerId == uid {
-                    Text("D").font(Theme.body(12, .black))
-                        .frame(width: 22, height: 22)
-                        .background(Circle().fill(.white))
-                        .offset(x: 4, y: -4)
-                }
+            // Frames while cards land here and bots look at theirs.
+            TimelineView(FramesUntil(end: clock?.peeksEnd ?? .distantPast, fps: 30)) { context in
+                avatar(at: context.date)
             }
             Text(isMe ? "You" : room.isAway(uid) ? "\(room.name(of: uid)) · away" : room.name(of: uid))
                 .font(Theme.body(13, .bold)).lineLimit(1).minimumScaleFactor(0.7)
@@ -75,6 +57,67 @@ private struct PlayerChip: View {
         }
         .frame(width: 72)
         .opacity(out ? 0.35 : 1)
+    }
+
+    private func avatar(at date: Date) -> some View {
+        let isTurn = round.turnId == uid
+        let dealing = clock.map { date < $0.end } ?? false
+        return ZStack(alignment: .topTrailing) {
+            Blob(
+                color: Theme.color(forSeat: room.seat(of: uid)),
+                size: 56,
+                mood: mood,
+                look: dealing ? lookAtDealer : .zero,
+                hair: round.bossId == uid
+            )
+            .animation(.easeInOut(duration: 0.3), value: dealing)
+            .background { if isTurn { TurnPulse() } }
+            .overlay {
+                if isTurn, let deadline = round.turnDeadlineDate {
+                    TurnClockRing(deadline: deadline)
+                } else {
+                    Circle().strokeBorder(.white, lineWidth: isTurn ? 4 : 0)
+                }
+            }
+            .scaleEffect(isTurn ? 1.08 : 1)
+            .dealSpot(round.dealerId == uid ? .dealer : nil)
+            .overlay(alignment: .bottomTrailing) {
+                if room.isStillIn(uid), !round.withdrawn.contains(uid) {
+                    MiniCards(landed: clock?.landedCount(uid, at: date) ?? DealTimeline.handSize, peeked: peeked(at: date))
+                        .dealSpot(.seat(uid))
+                        .offset(x: 14, y: -2)
+                        .transition(.offset(y: 14).combined(with: .opacity))
+                }
+            }
+            if room.isAway(uid) || room.isAI(uid) {
+                Text("🤖").font(.system(size: 16))
+                    .frame(width: 26, height: 26)
+                    .background(Circle().fill(.white))
+                    .offset(x: -36, y: 34)
+            }
+            if round.dealerId == uid {
+                Text("D").font(Theme.body(12, .black))
+                    .frame(width: 22, height: 22)
+                    .background(Circle().fill(.white))
+                    .offset(x: 4, y: -4)
+            }
+        }
+    }
+
+    /// While the cards are dealt, everyone watches the dealer (who looks down at the deck).
+    private var lookAtDealer: CGSize {
+        if round.dealerId == uid { return CGSize(width: 0, height: 1) }
+        return CGSize(width: room.seat(of: round.dealerId) < room.seat(of: uid) ? -1 : 1, height: 0.2)
+    }
+
+    /// How many cards this player has looked at. Bots (AI and away players) look on their own schedule.
+    private func peeked(at date: Date) -> Int {
+        let told = room.peeks?[uid] ?? 0
+        if room.isAI(uid) || room.isAway(uid) {
+            let sinceDeal = clock.map { date.timeIntervalSince($0.end) } ?? .infinity
+            return max(told, DealTimeline.botPeeks(uid, round: round.roundNumber, sinceDealEnd: sinceDeal))
+        }
+        return isMe ? max(told, myFlips) : told
     }
 
     private var mood: Blob.Mood {
@@ -109,6 +152,30 @@ private struct PlayerChip: View {
             .background(Capsule().fill(dark ? Theme.ink : .white))
             .foregroundStyle(dark ? .white : Theme.ink)
             .contentTransition(.numericText())
+    }
+}
+
+/// Four small face-down cards in front of a player. The ones they've looked at stand up a little:
+/// a tell everyone can read ("he bet 2,000 without even looking!").
+private struct MiniCards: View {
+    var landed: Int
+    var peeked: Int
+
+    var body: some View {
+        // 7 pt apart; DealLayer lands each card in the same spot.
+        HStack(spacing: 5 - DealLayer.miniWidth) {
+            ForEach(0..<DealTimeline.handSize, id: \.self) { i in
+                // Unseen cards lie flat on the table; a card that's been looked at stands up.
+                CardBack(width: DealLayer.miniWidth)
+                    .scaleEffect(x: 1, y: i < peeked ? 1 : 0.6, anchor: .bottom)
+                    .rotationEffect(.degrees(Double(i) * 8 - 12 + (i < peeked ? -8 : 0)), anchor: .bottom)
+                    .offset(y: i < peeked ? -7 : 0)
+                    .opacity(i < landed ? 1 : 0)
+            }
+        }
+        .animation(.spring(duration: 0.3, bounce: 0.55), value: peeked)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(peeked == 0 ? "Hasn't looked at their cards" : "Looked at \(peeked) of 4 cards")
     }
 }
 

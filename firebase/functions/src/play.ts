@@ -1,12 +1,14 @@
 // Playing rounds on top of rooms. Storage is described in store.ts.
 
-import { Firestore } from "firebase-admin/firestore";
+import { FieldPath, Firestore } from "firebase-admin/firestore";
 import { HttpsError } from "firebase-functions/v2/https";
+import { HAND_SIZE } from "./engine/cards.js";
 import * as engine from "./engine/round.js";
 import { RoundState } from "./engine/round.js";
 import type { Room } from "./rooms.js";
 import { PrivateRound, awayFields, clock } from "./schedule.js";
 import { advanceTable, privateRef, roomRef, writeRound } from "./store.js";
+import type { PublicRound } from "./store.js";
 import { waker } from "./ticker.js";
 import { cleanCode, toPoints } from "./util.js";
 
@@ -96,6 +98,30 @@ export async function nextRound(db: Firestore, uid: string, d: { code?: unknown;
     return advanceTable(tx, ref, room, state, clock.now());
   });
   await waker.wake(code, wakeAt);
+}
+/**
+ * Records how many of their cards a player has turned over, so the others see their face-down cards
+ * lift. Counts only go up, and a late call for an earlier round is ignored.
+ */
+export async function peek(
+  db: Firestore, uid: string, d: { code?: unknown; roundNumber?: unknown; count?: unknown },
+): Promise<void> {
+  const code = cleanCode(d.code);
+  const count = d.count;
+  if (typeof count !== "number" || !Number.isInteger(count) || count < 1 || count > HAND_SIZE) {
+    throw new HttpsError("invalid-argument", `Peeks count 1 to ${HAND_SIZE} cards`);
+  }
+  const ref = roomRef(db, code);
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw new HttpsError("not-found", "No room with that code");
+    const room = snap.data() as Room & { round?: PublicRound };
+    if (!room.playerIds.includes(uid)) throw new HttpsError("permission-denied", "You are not in this room");
+    if (room.status !== "playing" || room.round?.roundNumber !== d.roundNumber) return;
+    if (!room.table?.seats.some((s) => s.id === uid)) throw new HttpsError("failed-precondition", "You are out of the game");
+    if ((room.peeks?.[uid] ?? 0) >= count) return;
+    tx.update(ref, new FieldPath("peeks", uid), count);
+  });
 }
 
 // MARK: Away players
