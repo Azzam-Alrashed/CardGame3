@@ -62,6 +62,24 @@ describe.skipIf(!onEmulator)("playing a round", () => {
     expect(r.deadline! - before).toBeLessThanOrEqual(2 * 60_000 + 5000);
   });
 
+  it("on a tied highest bet, the latest to reach it is the boss, whatever order the bets are stored in", async () => {
+    // Seats u0, u1, u3, u2, so betting goes u1, u3, u2, u0: u2 is later than u3 but sorts first.
+    ({ code } = await createRoom(db, "u0", { name: "Host" }));
+    for (const uid of ["u1", "u3", "u2"]) await joinRoom(db, uid, { code, name: uid });
+    await startGame(db, "u0", { code });
+    await play.withdraw(db, "u1", { code });
+    await play.bet(db, "u3", { code, amount: 5000 }); // all in
+    await play.bet(db, "u2", { code, amount: 5000 }); // all in, matching it
+    // Firestore doesn't promise map key order (the emulator happens to keep it), so store the bets sorted.
+    // Delete first: overwriting a doc in the emulator keeps its old key order.
+    const priv = (await privateDoc().get()).data()!;
+    priv.state.bets = Object.fromEntries(Object.entries(priv.state.bets).sort(([a], [b]) => a.localeCompare(b)));
+    await privateDoc().delete();
+    await privateDoc().set(priv);
+    await play.withdraw(db, "u0", { code });
+    expect((await round()).bossId).toBe("u2");
+  });
+
   it("offers and deals: everyone else takes a deal, boss wins automatically", async () => {
     await toDeals();
     await play.makeOffer(db, "u1", { code, amount: 500 });

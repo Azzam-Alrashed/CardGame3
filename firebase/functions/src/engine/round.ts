@@ -45,7 +45,7 @@ export interface RoundState {
   /** Index into players of whoever must decide next (betting phase only). */
   turnIndex: number;
   decidedCount: number;
-  /** Entrants and their bets, in the order they entered. */
+  /** Entrants and their bets. Storage doesn't keep key order: use `entrantsInOrder` for betting order. */
   bets: Record<string, number>;
   withdrawn: string[];
   bossId: string | null;
@@ -80,6 +80,14 @@ export function startRound(seats: readonly Seat[], dealerIndex: number, rng: Rng
 /** The highest bet placed so far (0 if nobody has entered). */
 export function highestBet(state: RoundState): number {
   return Math.max(0, ...Object.values(state.bets));
+}
+
+/** Entrants in the order they bet: everyone decides once, going right from the dealer. */
+function entrantsInOrder(state: RoundState): string[] {
+  const n = state.players.length;
+  return state.players
+    .map((_, i) => state.players[(state.dealerIndex + 1 + i) % n].id)
+    .filter((id) => id in state.bets);
 }
 
 function player(state: RoundState, id: string): RoundPlayer {
@@ -123,7 +131,7 @@ function advanceTurn(state: RoundState): RoundState {
 }
 
 function closeBetting(state: RoundState): RoundState {
-  const entrants = Object.keys(state.bets);
+  const entrants = entrantsInOrder(state);
   if (entrants.length === 0) {
     return finish(state, { outcome: "redeal", winnerId: null, revealed: [], deltas: {} });
   }
@@ -206,7 +214,7 @@ export function timeUp(state: RoundState): RoundState {
 }
 
 function showdown(state: RoundState): RoundState {
-  const revealed = Object.keys(state.bets).filter((id) => !(id in state.deals));
+  const revealed = entrantsInOrder(state).filter((id) => !(id in state.deals));
   const winnerId = revealed.reduce((best, id) =>
     compareHands(player(state, id).hand, player(state, best).hand) > 0 ? id : best,
   );
