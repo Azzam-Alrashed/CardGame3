@@ -100,6 +100,19 @@ describe("betting", () => {
     s = withdraw(s, "p0");
     expect(s.bossId).toBe("p2");
   });
+  it("a tied boss doesn't depend on the order storage gives the bets back in", () => {
+    // Firestore returns map keys sorted. Dealer d, so betting goes c, b, a, d: b is later but sorts first.
+    const stored = (s: RoundState): RoundState => ({
+      ...s,
+      bets: Object.fromEntries(Object.entries(s.bets).sort(([x], [y]) => x.localeCompare(y))),
+    });
+    let s = startRound(["d", "c", "b", "a"].map((id) => ({ id, points: id === "b" ? 2000 : 5000 })), 0, fixedRng);
+    s = stored(placeBet(s, "c", 2000));
+    s = stored(placeBet(s, "b", 2000)); // all in
+    s = stored(withdraw(s, "a"));
+    s = withdraw(s, "d");
+    expect(s.bossId).toBe("b");
+  });
   it("highest bettor becomes boss, timer is 1 min per entrant", () => {
     let s = round(hands);
     s = placeBet(s, "p1", 500);
