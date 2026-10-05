@@ -3,7 +3,6 @@ import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { initializeApp } from "firebase-admin/app";
 import { Firestore, getFirestore } from "firebase-admin/firestore";
 import { Room, addAiPlayer, createRoom, joinRoom, leaveRoom, randomCode, removeAiPlayer, startGame } from "./rooms.js";
-import { botTiming } from "./play.js";
 
 const onEmulator = !!process.env.FIRESTORE_EMULATOR_HOST;
 
@@ -92,8 +91,6 @@ describe.skipIf(!onEmulator)("AI players", () => {
   let db: Firestore;
   beforeAll(() => {
     db = getFirestore();
-    botTiming.minMs = 0;
-    botTiming.maxMs = 0;
   });
   beforeEach(async () => {
     await db.recursiveDelete(db.collection("rooms"));

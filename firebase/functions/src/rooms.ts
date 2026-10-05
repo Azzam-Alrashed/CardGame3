@@ -6,8 +6,11 @@ import { randomInt } from "node:crypto";
 import { HttpsError } from "firebase-functions/v2/https";
 import { MAX_PLAYERS, MIN_PLAYERS } from "./engine/cards.js";
 import { Table, newTable } from "./engine/game.js";
-import { dealRound, runBots } from "./play.js";
 import { BOT_STYLES, BotStyle } from "./engine/bot.js";
+import { clock } from "./schedule.js";
+import { dealRound } from "./store.js";
+import { waker } from "./ticker.js";
+import { CODE_LENGTH, cleanCode } from "./util.js";
 
 export type RoomStatus = "lobby" | "playing" | "finished";
 
@@ -32,11 +35,14 @@ export interface Room {
   aiPlayers?: string[];
   /** Each away player's or AI player's bot personality, kept for the whole game. */
   botStyles?: Record<string, BotStyle>;
+  /** Epoch ms when the server next needs to act here (a bot move or a timer); null if waiting on people. */
+  wakeAt?: number | null;
+  /** Epoch ms of the last change; idle rooms are cleaned up. */
+  updatedAt?: number;
 }
 
 /** No I or O, so codes can't be confused with 1 and 0. */
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-const CODE_LENGTH = 4;
 const MAX_NAME_LENGTH = 20;
 
 export function randomCode(rng: () => number = Math.random): string {
@@ -53,12 +59,6 @@ export function cleanName(name: unknown): string {
   return trimmed;
 }
 
-function cleanCode(code: unknown): string {
-  const c = typeof code === "string" ? code.trim().toUpperCase() : "";
-  if (c.length !== CODE_LENGTH) throw new HttpsError("invalid-argument", "Room code must be 4 letters");
-  return c;
-}
-
 const rooms = (db: Firestore) => db.collection("rooms");
 
 export async function createRoom(db: Firestore, uid: string, data: { name?: unknown }): Promise<{ code: string }> {
@@ -73,6 +73,7 @@ export async function createRoom(db: Firestore, uid: string, data: { name?: unkn
       playerIds: [uid],
       table: null,
       createdAt: FieldValue.serverTimestamp(),
+      updatedAt: clock.now(),
     };
     try {
       await rooms(db).doc(code).create(room); // fails if the code is taken
@@ -97,12 +98,12 @@ export async function joinRoom(
     const existing = room.players.find((p) => p.uid === uid);
     if (existing) {
       // Re-joining just updates the name.
-      tx.update(ref, { players: room.players.map((p) => (p.uid === uid ? { uid, name } : p)) });
+      tx.update(ref, { players: room.players.map((p) => (p.uid === uid ? { uid, name } : p)), updatedAt: clock.now() });
       return;
     }
     if (room.status !== "lobby") throw new HttpsError("failed-precondition", "This game has already started");
     if (room.players.length >= MAX_PLAYERS) throw new HttpsError("failed-precondition", "This room is full");
-    tx.update(ref, { players: [...room.players, { uid, name }], playerIds: [...room.playerIds, uid] });
+    tx.update(ref, { players: [...room.players, { uid, name }], playerIds: [...room.playerIds, uid], updatedAt: clock.now() });
   });
   return { code };
 }
@@ -125,13 +126,13 @@ export async function leaveRoom(db: Firestore, uid: string, data: { code?: unkno
     }
     // If the host leaves, the next human in the room becomes host.
     const hostId = room.hostId === uid ? humans[0].uid : room.hostId;
-    tx.update(ref, { players, playerIds: players.map((p) => p.uid), hostId });
+    tx.update(ref, { players, playerIds: players.map((p) => p.uid), hostId, updatedAt: clock.now() });
   });
 }
 
 export async function startGame(db: Firestore, uid: string, data: { code?: unknown }): Promise<void> {
   const code = cleanCode(data.code);
-  await db.runTransaction(async (tx) => {
+  const wakeAt = await db.runTransaction(async (tx) => {
     const ref = rooms(db).doc(code);
     const snap = await tx.get(ref);
     if (!snap.exists) throw new HttpsError("not-found", "No room with that code");
@@ -141,9 +142,9 @@ export async function startGame(db: Firestore, uid: string, data: { code?: unkno
     if (room.players.length < MIN_PLAYERS) {
       throw new HttpsError("failed-precondition", `You need at least ${MIN_PLAYERS} players`);
     }
-    dealRound(tx, ref, newTable(room.players.map((p) => p.uid)), Date.now(), { status: "playing" });
+    return dealRound(tx, ref, room, newTable(room.players.map((p) => p.uid)), clock.now(), { status: "playing" });
   });
-  await runBots(db, code); // an AI player may bet first
+  await waker.wake(code, wakeAt); // an AI player may bet first
 }
 
 // MARK: AI players
@@ -168,6 +169,7 @@ export async function addAiPlayer(db: Firestore, uid: string, data: { code?: unk
       playerIds: [...room.playerIds, id],
       aiPlayers: [...(room.aiPlayers ?? []), id],
       botStyles: { ...room.botStyles, [id]: BOT_STYLES[randomInt(BOT_STYLES.length)] },
+      updatedAt: clock.now(),
     });
     return { id };
   });
@@ -191,6 +193,7 @@ export async function removeAiPlayer(
       playerIds: room.playerIds.filter((p) => p !== aiId),
       aiPlayers: (room.aiPlayers ?? []).filter((p) => p !== aiId),
       botStyles,
+      updatedAt: clock.now(),
     });
   });
 }

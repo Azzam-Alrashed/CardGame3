@@ -48,7 +48,13 @@ Tech choices are explained in **[TECH_STACK.md](TECH_STACK.md)**.
 
 All game logic runs on the server. Phones only call functions and listen to their room, so nobody can peek at other players' cards.
 
-Bots (AI players and away players) also run on the server. After each move, the server plays any bot turns with a 2–4 second "thinking" pause. Firestore triggers can't be used because Cloud Functions isn't available in Dammam.
+Bots (AI players and away players) and timers also run on the server, in the background:
+
+- Every change saves `wakeAt` on the room: when it next needs attention (a bot's move after a 2–4 second "thinking" pause, or the deals timer).
+- A Cloud Task (`tickTask`) wakes the room at that time, does the one thing that is due, and schedules the next.
+- A sweeper (`sweep`) runs every minute for rooms whose wake-up was missed, and `cleanup` deletes idle rooms once a day.
+
+Moves return right away instead of waiting for bots. Firestore triggers can't be used because Cloud Functions isn't available in Dammam.
 
 ### Tests
 
@@ -60,12 +66,20 @@ npm install
 npm run test:emulator
 ```
 
-`npm test` runs only the tests that don't need the emulators: the rules engine and the bot.
+`npm test` runs only the tests that don't need the emulators: the rules engine, the bot and the scheduling rules.
 
 ### Deploy
 
 ```bash
 firebase deploy --only firestore:rules,functions
+```
+
+The first deploy with background bots needs the Functions service account to be allowed to schedule Cloud Tasks (once per project):
+
+```bash
+SA=$(gcloud projects describe cardgame-3 --format='value(projectNumber)')-compute@developer.gserviceaccount.com
+gcloud projects add-iam-policy-binding cardgame-3 --member="serviceAccount:$SA" --role=roles/cloudtasks.enqueuer
+gcloud projects add-iam-policy-binding cardgame-3 --member="serviceAccount:$SA" --role=roles/iam.serviceAccountUser
 ```
 
 ## iOS app
@@ -77,7 +91,7 @@ The Xcode project is committed and is the source of truth, including the signing
 | Scheme | Backend |
 | --- | --- |
 | **CardGame3** | Live Firebase. Use this on real iPhones. |
-| **CardGame3 (Emulators)** | Local emulators. Start them first with `firebase emulators:start --only auth,functions,firestore`. |
+| **CardGame3 (Emulators)** | Local emulators. Start them first with `firebase emulators:start --only auth,functions,firestore,tasks`. |
 
 To install on your iPhone, select it as the device and set your **Team** under Signing & Capabilities.
 
