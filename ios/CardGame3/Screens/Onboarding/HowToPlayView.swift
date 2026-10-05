@@ -44,6 +44,9 @@ struct HowToPlayView: View {
             "The game ends when fewer than 4 players remain. Most points wins.",
             "Equal points: whoever reached it first. Same round: closest to the dealer's right.",
         ]),
+        ("Playing nicely", [
+            "Long-press a player to report their name, or hide it on your phone.",
+        ]),
     ]
 
     var body: some View {
@@ -70,6 +73,8 @@ struct HowToPlayView: View {
                     }
                     .buttonStyle(PillButtonStyle(primary: false))
                     .padding(.top, 8)
+                    Link("Contact us", destination: URL(string: "mailto:azzam.rar@gmail.com?subject=Muda")!)
+                        .buttonStyle(PillButtonStyle(primary: false))
                 }
                 .padding(20)
                 .frame(maxWidth: 640)

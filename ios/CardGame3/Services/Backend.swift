@@ -123,6 +123,18 @@ final class Backend {
     /// Leaves the screen of a finished game (the server keeps the room as a record).
     func goHome() { stopListening() }
 
+    /// Reports another player's name for review. Returns whether the report was sent.
+    func report(_ uid: String, reason: ReportReason) async -> Bool {
+        guard let code = room?.code else { return false }
+        var sent = false
+        await run {
+            _ = try await functions.httpsCallable("reportPlayer")
+                .call(["code": code, "playerId": uid, "reason": reason.rawValue])
+            sent = true
+        }
+        return sent
+    }
+
     // MARK: Away
 
     /// Room code of a game this player stepped away from (shown on Home as "Back to game").
@@ -264,4 +276,18 @@ final class Backend {
 enum BackendError: LocalizedError {
     case badResponse
     var errorDescription: String? { "Unexpected response from the server" }
+}
+
+/// Why a player's name was reported (matches the server's `REPORT_REASONS`).
+enum ReportReason: String, CaseIterable, Identifiable {
+    case offensive, impersonation, other
+
+    var id: String { rawValue }
+    var label: String {
+        switch self {
+        case .offensive: "Offensive name"
+        case .impersonation: "Pretending to be someone"
+        case .other: "Something else"
+        }
+    }
 }

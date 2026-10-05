@@ -3,7 +3,8 @@ import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { initializeApp } from "firebase-admin/app";
 import { Firestore, getFirestore } from "firebase-admin/firestore";
 import {
-  Room, addAiPlayer, createRoom, joinRoom, leaveRoom, randomCode, rematch, removeAiPlayer, removePlayer, startGame,
+  Room, addAiPlayer, createRoom, joinRoom, leaveRoom, randomCode, rematch, removeAiPlayer, removePlayer, reportPlayer,
+  startGame,
 } from "./rooms.js";
 
 const onEmulator = !!process.env.FIRESTORE_EMULATOR_HOST;
@@ -212,6 +213,44 @@ describe.skipIf(!onEmulator)("lobby control and rematch", () => {
     await expect(rematch(db, "stranger", { code: old })).rejects.toThrow(/not in this room/);
     const { code: lobby } = await createRoom(db, "x", { name: "X" });
     await expect(rematch(db, "x", { code: lobby })).rejects.toThrow(/isn't over/);
+  });
+});
+
+describe.skipIf(!onEmulator)("names and reports", () => {
+  let db: Firestore;
+  beforeAll(() => {
+    db = getFirestore();
+  });
+  beforeEach(async () => {
+    await db.recursiveDelete(db.collection("rooms"));
+    await db.recursiveDelete(db.collection("reports"));
+  });
+
+  it("offensive names can't create or join a room", async () => {
+    await expect(createRoom(db, "u0", { name: "sh1t head" })).rejects.toThrow(/different name/);
+    const { code } = await createRoom(db, "u0", { name: "Host" });
+    await expect(joinRoom(db, "u1", { code, name: "قحبة" })).rejects.toThrow(/different name/);
+  });
+
+  it("players can report another person's name; reporting again updates the same report", async () => {
+    const { code } = await createRoom(db, "u0", { name: "Host" });
+    await joinRoom(db, "u1", { code, name: "Meanie" });
+    await reportPlayer(db, "u0", { code, playerId: "u1", reason: "offensive" });
+    await reportPlayer(db, "u0", { code, playerId: "u1", reason: "impersonation" });
+    const reports = await db.collection("reports").get();
+    expect(reports.size).toBe(1);
+    expect(reports.docs[0].id).toBe("u0_u1");
+    expect(reports.docs[0].data()).toMatchObject({ code, reporter: "u0", reported: "u1", name: "Meanie", reason: "impersonation" });
+  });
+
+  it("you can't report yourself, an AI player, or anyone from outside the room", async () => {
+    const { code } = await createRoom(db, "u0", { name: "Host" });
+    const { id: ai } = await addAiPlayer(db, "u0", { code });
+    await joinRoom(db, "u1", { code, name: "Guest" });
+    await expect(reportPlayer(db, "u0", { code, playerId: "u0", reason: "other" })).rejects.toThrow(/can't be reported/);
+    await expect(reportPlayer(db, "u0", { code, playerId: ai, reason: "other" })).rejects.toThrow(/can't be reported/);
+    await expect(reportPlayer(db, "x", { code, playerId: "u1", reason: "other" })).rejects.toThrow(/not in this room/);
+    await expect(reportPlayer(db, "u0", { code, playerId: "u1", reason: "rude" })).rejects.toThrow(/reason/);
   });
 });
 

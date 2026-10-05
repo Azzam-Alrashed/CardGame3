@@ -11,6 +11,7 @@ struct PlayersStrip: View {
                 HStack(spacing: 14) {
                     ForEach(room.players) { player in
                         PlayerChip(room: room, round: round, uid: player.uid, isMe: player.uid == me)
+                            .playerMenu(player.uid, in: room)
                             .id(player.uid)
                     }
                 }

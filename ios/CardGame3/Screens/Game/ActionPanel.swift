@@ -96,12 +96,15 @@ struct ActionPanel: View {
             }
             ForEach(round.offers.sorted { $0.key < $1.key }, id: \.key) { uid, offer in
                 HStack(spacing: 10) {
-                    Blob(color: Theme.color(forSeat: room.seat(of: uid)), size: 36, mood: .surprised)
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(room.name(of: uid)).font(Theme.body(15, .bold)).lineLimit(1)
-                        Text("asks \(offer.formatted())").font(Theme.body(14, .heavy)).opacity(0.7)
-                            .contentTransition(.numericText())
+                    HStack(spacing: 10) {
+                        Blob(color: Theme.color(forSeat: room.seat(of: uid)), size: 36, mood: .surprised)
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(room.name(of: uid)).font(Theme.body(15, .bold)).lineLimit(1)
+                            Text("asks \(offer.formatted())").font(Theme.body(14, .heavy)).opacity(0.7)
+                                .contentTransition(.numericText())
+                        }
                     }
+                    .playerMenu(uid, in: room)
                     Spacer(minLength: 4)
                     AsyncButton("No") { await backend.answerOffer(from: uid, accept: false) }
                         .buttonStyle(PillButtonStyle(primary: false)).frame(width: 70)

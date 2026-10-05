@@ -37,6 +37,8 @@ cards,card game,poker,bluff,party,friends,multiplayer,bet,deal,boss,مداقش,�
 - **Sign-in required:** No (anonymous sign-in happens automatically)
 - **Notes:**
   > No account needed. To test alone: enter a name → Create room → tap "Add AI player" 3 times → Start game. AI players bet, make deals and reveal on their own. Uses points only; there is no real-money gambling and no purchases.
+  >
+  > The only user content is player names. Offensive names are rejected when entered. Long-press any player to report their name (reviewed by us) or hide it on your device. The host can remove players from the lobby. Contact: How to play → Contact us.
 - **Contact:** Azzam Alrashed · azzam.rar@gmail.com · (your phone)
 
 ## App Privacy ("Data Not Collected"? → No, choose these)
