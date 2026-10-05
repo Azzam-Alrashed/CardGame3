@@ -2,7 +2,7 @@ import SwiftUI
 
 struct LobbyView: View {
     @Environment(Backend.self) private var backend
-    /// AI player the host tapped, waiting for "Remove" to be confirmed.
+    /// Player the host tapped ✕ on, waiting for "Remove" to be confirmed.
     @State private var removing: Room.Player?
     @State private var copied = false
 
@@ -55,7 +55,7 @@ struct LobbyView: View {
                             isHost: player.uid == room.hostId,
                             isYou: player.uid == backend.uid,
                             isAI: room.isAI(player.uid),
-                            onRemove: backend.isHost && room.isAI(player.uid) ? { removing = player } : nil
+                            onRemove: backend.isHost && player.uid != room.hostId ? { removing = player } : nil
                         )
                         .transition(.scale(scale: 0.3).combined(with: .opacity))
                     }
@@ -76,7 +76,7 @@ struct LobbyView: View {
               titleVisibility: .visible
           ) {
               Button("Remove", role: .destructive) {
-                  if let id = removing?.uid { Task { await backend.removeAiPlayer(id) } }
+                  if let id = removing?.uid { Task { await backend.removePlayer(id) } }
               }
           }
         } side: {

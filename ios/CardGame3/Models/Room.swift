@@ -24,6 +24,9 @@ struct Room: Decodable, Equatable {
     let away: [String]?
     /// AI players added by the host; always played by a bot.
     let aiPlayers: [String]?
+    /// After the game: the new lobby someone opened to play again, and who opened it.
+    let rematchCode: String?
+    let rematchBy: String?
 
     func name(of uid: String) -> String {
         players.first { $0.uid == uid }?.name ?? "?"

@@ -39,6 +39,9 @@ export interface Room {
   wakeAt?: number | null;
   /** Epoch ms of the last change; idle rooms are cleaned up. */
   updatedAt?: number;
+  /** After the game: the code of the new lobby someone opened to play again, and who opened it. */
+  rematchCode?: string;
+  rematchBy?: string;
 }
 
 /** No I or O, so codes can't be confused with 1 and 0. */
@@ -175,7 +178,24 @@ export async function addAiPlayer(db: Firestore, uid: string, data: { code?: unk
   });
 }
 
-/** Host only, in the lobby: removes one of the AI players. */
+/** Host only, in the lobby: removes any other player, person or AI. */
+export async function removePlayer(
+  db: Firestore, uid: string, data: { code?: unknown; playerId?: unknown },
+): Promise<void> {
+  const code = cleanCode(data.code);
+  await db.runTransaction(async (tx) => {
+    const ref = rooms(db).doc(code);
+    const room = await hostLobby(tx, ref, uid);
+    const id = data.playerId;
+    if (typeof id !== "string" || !room.playerIds.includes(id)) {
+      throw new HttpsError("invalid-argument", "That player isn't in this room");
+    }
+    if (id === uid) throw new HttpsError("invalid-argument", "Use Leave room to leave");
+    tx.update(ref, withoutPlayer(room, id));
+  });
+}
+
+/** Host only, in the lobby: removes one of the AI players. Version 1.0 of the app calls this. */
 export async function removeAiPlayer(
   db: Firestore, uid: string, data: { code?: unknown; aiId?: unknown },
 ): Promise<void> {
@@ -187,15 +207,20 @@ export async function removeAiPlayer(
     if (typeof aiId !== "string" || !(room.aiPlayers ?? []).includes(aiId)) {
       throw new HttpsError("invalid-argument", "That player isn't an AI player in this room");
     }
-    const { [aiId]: _, ...botStyles } = room.botStyles ?? {};
-    tx.update(ref, {
-      players: room.players.filter((p) => p.uid !== aiId),
-      playerIds: room.playerIds.filter((p) => p !== aiId),
-      aiPlayers: (room.aiPlayers ?? []).filter((p) => p !== aiId),
-      botStyles,
-      updatedAt: clock.now(),
-    });
+    tx.update(ref, withoutPlayer(room, aiId));
   });
+}
+
+/** Room fields with one player taken out of the lobby. */
+function withoutPlayer(room: Room, id: string): Partial<Room> {
+  const { [id]: _, ...botStyles } = room.botStyles ?? {};
+  return {
+    players: room.players.filter((p) => p.uid !== id),
+    playerIds: room.playerIds.filter((p) => p !== id),
+    aiPlayers: (room.aiPlayers ?? []).filter((p) => p !== id),
+    botStyles,
+    updatedAt: clock.now(),
+  };
 }
 
 /** Loads the room and checks the caller is its host and the game hasn't started. */
@@ -203,7 +228,55 @@ async function hostLobby(tx: Transaction, ref: DocumentReference, uid: string): 
   const snap = await tx.get(ref);
   if (!snap.exists) throw new HttpsError("not-found", "No room with that code");
   const room = snap.data() as Room;
-  if (room.hostId !== uid) throw new HttpsError("permission-denied", "Only the host can change AI players");
+  if (room.hostId !== uid) throw new HttpsError("permission-denied", "Only the host can change the players");
   if (room.status !== "lobby") throw new HttpsError("failed-precondition", "The game has already started");
   return room;
+}
+
+// MARK: Rematch
+
+/**
+ * After a game: opens a new lobby with the same AI players, hosted by the caller, and points the old
+ * room at it so everyone else sees "Join rematch". If someone already opened one, joins it instead.
+ * The old room stays as the record of the finished game.
+ */
+export async function rematch(db: Firestore, uid: string, data: { code?: unknown }): Promise<{ code: string }> {
+  const code = cleanCode(data.code);
+  const oldRef = rooms(db).doc(code);
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const newCode = randomCode();
+    const outcome = await db.runTransaction(async (tx) => {
+      const [oldSnap, newSnap] = await Promise.all([tx.get(oldRef), tx.get(rooms(db).doc(newCode))]);
+      if (!oldSnap.exists) throw new HttpsError("not-found", "No room with that code");
+      const old = oldSnap.data() as Room;
+      const me = old.players.find((p) => p.uid === uid);
+      if (!me) throw new HttpsError("permission-denied", "You are not in this room");
+      if (old.status !== "finished") throw new HttpsError("failed-precondition", "The game isn't over yet");
+      if (old.rematchCode) return { kind: "join" as const, code: old.rematchCode, name: me.name };
+      if (newSnap.exists) return null; // code taken: try another
+
+      const ai = new Set(old.aiPlayers ?? []);
+      const aiPlayers = old.players.filter((p) => ai.has(p.uid));
+      const now = clock.now();
+      const room: Room = {
+        code: newCode,
+        hostId: uid,
+        status: "lobby",
+        players: [me, ...aiPlayers],
+        playerIds: [uid, ...aiPlayers.map((p) => p.uid)],
+        table: null,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: now,
+        aiPlayers: aiPlayers.map((p) => p.uid),
+        botStyles: Object.fromEntries(aiPlayers.map((p) => [p.uid, old.botStyles?.[p.uid] ?? "balanced"])),
+      };
+      tx.create(rooms(db).doc(newCode), room);
+      tx.update(oldRef, { rematchCode: newCode, rematchBy: me.name, updatedAt: now });
+      return { kind: "created" as const, code: newCode };
+    });
+    if (outcome === null) continue;
+    if (outcome.kind === "created") return { code: outcome.code };
+    return joinRoom(db, uid, { code: outcome.code, name: outcome.name });
+  }
+  throw new HttpsError("resource-exhausted", "Could not find a free room code, try again");
 }

@@ -2,7 +2,9 @@
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { initializeApp } from "firebase-admin/app";
 import { Firestore, getFirestore } from "firebase-admin/firestore";
-import { Room, addAiPlayer, createRoom, joinRoom, leaveRoom, randomCode, removeAiPlayer, startGame } from "./rooms.js";
+import {
+  Room, addAiPlayer, createRoom, joinRoom, leaveRoom, randomCode, rematch, removeAiPlayer, removePlayer, startGame,
+} from "./rooms.js";
 
 const onEmulator = !!process.env.FIRESTORE_EMULATOR_HOST;
 
@@ -139,6 +141,77 @@ describe.skipIf(!onEmulator)("AI players", () => {
     expect(room.status).toBe("playing");
     // u0 deals, so the three AIs bet first; the round now waits for the human (or already ended).
     expect(room.round.phase === "finished" || room.round.turnId === "u0").toBe(true);
+  });
+});
+
+describe.skipIf(!onEmulator)("lobby control and rematch", () => {
+  let db: Firestore;
+  beforeAll(() => {
+    db = getFirestore();
+  });
+  beforeEach(async () => {
+    await db.recursiveDelete(db.collection("rooms"));
+  });
+  const read = async (code: string) => (await db.doc(`rooms/${code}`).get()).data() as Room | undefined;
+
+  it("the host can remove anyone else from the lobby, people included", async () => {
+    const { code } = await createRoom(db, "u0", { name: "Host" });
+    await joinRoom(db, "u1", { code, name: "Guest" });
+    await joinRoom(db, "u2", { code, name: "Other" });
+    await expect(removePlayer(db, "u1", { code, playerId: "u2" })).rejects.toThrow(/Only the host/);
+    await expect(removePlayer(db, "u0", { code, playerId: "u0" })).rejects.toThrow(/Leave room/);
+    await expect(removePlayer(db, "u0", { code, playerId: "nobody" })).rejects.toThrow(/isn't in this room/);
+    await removePlayer(db, "u0", { code, playerId: "u1" });
+    expect((await read(code))!.playerIds).toEqual(["u0", "u2"]);
+  });
+
+  it("nobody can be removed once the game started", async () => {
+    const { code } = await createRoom(db, "u0", { name: "Host" });
+    for (let i = 1; i < 4; i++) await joinRoom(db, `u${i}`, { code, name: `P${i}` });
+    await startGame(db, "u0", { code });
+    await expect(removePlayer(db, "u0", { code, playerId: "u1" })).rejects.toThrow(/already started/);
+  });
+
+  /** A finished game: host u0, guest u1, two AI players. */
+  async function finishedGame(): Promise<string> {
+    const { code } = await createRoom(db, "u0", { name: "Host" });
+    await joinRoom(db, "u1", { code, name: "Sara" });
+    await addAiPlayer(db, "u0", { code });
+    await addAiPlayer(db, "u0", { code });
+    await startGame(db, "u0", { code });
+    await db.doc(`rooms/${code}`).update({ status: "finished", gameOver: { winnerId: "u1", standings: [] } });
+    return code;
+  }
+
+  it("play again opens a new lobby with the same AI players, hosted by whoever asked", async () => {
+    const old = await finishedGame();
+    const before = (await read(old))!;
+    const { code } = await rematch(db, "u1", { code: old });
+    expect(code).not.toBe(old);
+
+    const next = (await read(code))!;
+    expect(next).toMatchObject({ status: "lobby", hostId: "u1", table: null });
+    expect(next.players[0]).toEqual({ uid: "u1", name: "Sara" });
+    expect(next.aiPlayers).toEqual(before.aiPlayers);
+    expect(next.players.slice(1).map((p) => p.name)).toEqual(before.players.slice(2).map((p) => p.name));
+    for (const id of next.aiPlayers!) expect(next.botStyles![id]).toBe(before.botStyles![id]);
+
+    // The finished game stays, pointing at the rematch.
+    expect(await read(old)).toMatchObject({ status: "finished", rematchCode: code, rematchBy: "Sara" });
+  });
+
+  it("everyone else who asks joins the same rematch", async () => {
+    const old = await finishedGame();
+    const { code } = await rematch(db, "u1", { code: old });
+    expect(await rematch(db, "u0", { code: old })).toEqual({ code });
+    expect((await read(code))!.players.map((p) => p.uid)).toEqual(["u1", ...(await read(code))!.aiPlayers!, "u0"]);
+  });
+
+  it("only players of a finished game can ask for a rematch", async () => {
+    const old = await finishedGame();
+    await expect(rematch(db, "stranger", { code: old })).rejects.toThrow(/not in this room/);
+    const { code: lobby } = await createRoom(db, "x", { name: "X" });
+    await expect(rematch(db, "x", { code: lobby })).rejects.toThrow(/isn't over/);
   });
 });
 

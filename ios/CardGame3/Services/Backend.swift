@@ -24,6 +24,8 @@ final class Backend {
     private var handListener: ListenerRegistration?
     /// Round number we already asked the server to force-reveal, so we only ask once.
     private var timeUpSent: Int?
+    /// True while this player is leaving a room on purpose (so losing access isn't news).
+    private var leaving = false
 
     init() {
         playerName = UserDefaults.standard.string(forKey: "playerName") ?? ""
@@ -79,6 +81,8 @@ final class Backend {
 
     func leaveRoom() async {
         guard let code = room?.code else { return }
+        leaving = true
+        defer { leaving = false }
         await run {
             _ = try await functions.httpsCallable("leaveRoom").call(["code": code])
             stopListening()
@@ -92,10 +96,20 @@ final class Backend {
         }
     }
 
-    func removeAiPlayer(_ aiId: String) async {
+    /// Host only, in the lobby: removes another player, person or AI.
+    func removePlayer(_ uid: String) async {
         guard let code = room?.code else { return }
         await run {
-            _ = try await functions.httpsCallable("removeAiPlayer").call(["code": code, "aiId": aiId])
+            _ = try await functions.httpsCallable("removePlayer").call(["code": code, "playerId": uid])
+        }
+    }
+
+    /// After a game: opens a new lobby with the same AI players, or joins the one someone already opened.
+    func rematch() async {
+        guard let code = room?.code else { return }
+        await run {
+            let newCode = try await callForCode("rematch", ["code": code])
+            listen(to: newCode)
         }
     }
 
@@ -201,7 +215,10 @@ final class Backend {
                 Task { @MainActor in
                     guard let self else { return }
                     if error != nil {
-                        // No longer allowed to read this room (e.g. left it): forget it quietly.
+                        // No longer allowed to read this room: we left it, or the host removed us.
+                        if !self.leaving, self.room?.status == .lobby {
+                            self.errorMessage = "The host removed you from the room."
+                        }
                         self.stopListening()
                         return
                     }
