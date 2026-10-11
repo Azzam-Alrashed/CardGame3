@@ -23,6 +23,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.KeyboardActionHandler
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
@@ -288,6 +292,43 @@ fun PillField(
         decorationBox = { field ->
             Box {
                 if (value.isEmpty()) Text(placeholder, style = textStyle.copy(color = Color(0xFFC4C4C7)))
+                field()
+            }
+        },
+    )
+}
+
+/**
+ * White pill text field kept in a [TextFieldState], for input that must be reshaped as it's typed (the room
+ * code: capitals, letters only, four at most). Its [InputTransformation] stays in step with the keyboard while
+ * it composes a word, which reshaping the value in `onValueChange` doesn't (letters got dropped on Gboard).
+ */
+@Composable
+fun PillField(
+    state: TextFieldState,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    textStyle: TextStyle = Theme.body(18f),
+    inputTransformation: InputTransformation? = null,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    onKeyboardAction: KeyboardActionHandler? = null,
+) {
+    BasicTextField(
+        state = state,
+        modifier = modifier
+            .fillMaxWidth()
+            .softShadow(CircleShape, Color.Black.copy(alpha = 0.06f), 12.dp, 4.dp)
+            .background(Color.White, CircleShape)
+            .padding(horizontal = 22.dp, vertical = 16.dp),
+        inputTransformation = inputTransformation,
+        textStyle = textStyle.copy(color = Theme.ink),
+        keyboardOptions = keyboardOptions,
+        onKeyboardAction = onKeyboardAction,
+        lineLimits = TextFieldLineLimits.SingleLine,
+        cursorBrush = SolidColor(Theme.ink),
+        decorator = { field ->
+            Box {
+                if (state.text.isEmpty()) Text(placeholder, style = textStyle.copy(color = Color(0xFFC4C4C7)))
                 field()
             }
         },

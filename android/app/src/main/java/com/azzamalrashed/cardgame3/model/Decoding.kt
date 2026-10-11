@@ -1,5 +1,7 @@
 package com.azzamalrashed.cardgame3.model
 
+import android.util.Log
+
 // Reads the Firestore documents written by Cloud Functions into the models. Firestore hands back plain maps
 // (numbers as Long or Double), so this is done by hand. Like iOS's Decodable, a document missing a required
 // field reads as no room at all.
@@ -29,6 +31,7 @@ object Decode {
                 rematchBy = data["rematchBy"] as? String,
             )
         } catch (e: RuntimeException) {
+            Log.w("Decode", "A room document didn't read: ${e.message}", e)
             null
         }
     }

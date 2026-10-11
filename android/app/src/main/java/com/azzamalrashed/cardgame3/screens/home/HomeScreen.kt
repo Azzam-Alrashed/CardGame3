@@ -28,6 +28,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.TextFieldBuffer
+import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material3.Text
@@ -88,7 +91,8 @@ import kotlinx.coroutines.launch
 /** Name, create a room, join one by code, or go back to a game you stepped away from. (iOS: HomeView.swift) */
 @Composable
 fun HomeScreen(backend: Backend) {
-    var code by remember { mutableStateOf("") }
+    val codeState = rememberTextFieldState()
+    val code = codeState.text.toString()
     var showRules by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
     val ready = hasPlayerName(backend.playerName) && backend.uid != null
@@ -162,22 +166,22 @@ fun HomeScreen(backend: Backend) {
 
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         PillField(
-                            value = code,
-                            onValueChange = { code = roomCodeInput(it) },
+                            state = codeState,
                             placeholder = stringResource(R.string.home_room_code),
                             modifier = Modifier.weight(1f),
+                            inputTransformation = RoomCodeTransformation,
                             keyboardOptions = KeyboardOptions(
                                 capitalization = KeyboardCapitalization.Characters,
                                 autoCorrectEnabled = false,
                                 imeAction = ImeAction.Go,
                             ),
-                            keyboardActions = KeyboardActions(onGo = {
+                            onKeyboardAction = {
                                 focusManager.clearFocus()
                                 if (ready && code.length == ROOM_CODE_LENGTH) {
                                     val joining = code
                                     CardGame3App.scope.launch { backend.joinRoom(joining) }
                                 }
-                            }),
+                            },
                         )
                         JoinButton(
                             primary = codeComplete,
@@ -340,6 +344,15 @@ internal const val ROOM_CODE_LENGTH = 4
 
 /** What the room code field keeps of what was typed: letters only, in capitals, at most 4. */
 internal fun roomCodeInput(typed: String): String = typed.uppercase().filter { it.isLetter() }.take(ROOM_CODE_LENGTH)
+
+/** Reshapes the room code field as it's typed, with [roomCodeInput] (iOS does it in `.onChange(of: code)`). */
+private object RoomCodeTransformation : InputTransformation {
+    override fun TextFieldBuffer.transformInput() {
+        val typed = asCharSequence().toString()
+        val cleaned = roomCodeInput(typed)
+        if (cleaned != typed) replace(0, length, cleaned)
+    }
+}
 
 /** The name has something besides spaces (iOS trims `.whitespaces`: spaces and tabs, not newlines). */
 internal fun hasPlayerName(name: String): Boolean = name.any { !(it == '\t' || Character.isSpaceChar(it)) }
