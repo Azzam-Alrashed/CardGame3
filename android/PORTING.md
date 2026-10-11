@@ -27,24 +27,24 @@ Kotlin lives under `app/src/main/java/com/azzamalrashed/cardgame3/`.
 | Design/AdaptiveSplit.swift | design/AdaptiveSplit.kt | done |
 | Design/Controls.swift | design/Controls.kt, design/Dialogs.kt, design/Icons.kt | done |
 | (SwiftUI animation, TimelineView, sensoryFeedback) | design/Motion.kt, design/Haptics.kt | done |
-| Screens/Home/HomeView.swift | screens/home/HomeScreen.kt | todo |
-| Screens/Onboarding/OnboardingView.swift | screens/onboarding/OnboardingScreen.kt | todo |
-| Screens/Onboarding/HowToPlayView.swift | screens/onboarding/HowToPlaySheet.kt | todo |
-| Screens/Lobby/LobbyView.swift | screens/lobby/LobbyScreen.kt | todo |
-| Screens/Game/PlayerMenu.swift | screens/game/PlayerMenu.kt | todo |
-| Screens/Game/GameView.swift | screens/game/GameScreen.kt | todo |
-| Screens/Game/PlayersStrip.swift | screens/game/PlayersStrip.kt | todo |
-| Screens/Game/DealLayer.swift | screens/game/DealSpots.kt (done), screens/game/DealLayer.kt | todo |
-| Screens/Game/MyHand.swift | screens/game/MyHand.kt | todo |
-| Screens/Game/ActionPanel.swift | screens/game/ActionPanel.kt | todo |
-| Screens/Game/Banner.swift | screens/game/Banner.kt | todo |
-| Screens/Game/GameOverView.swift | screens/game/GameOverScreen.kt | todo |
+| Screens/Home/HomeView.swift | screens/home/HomeScreen.kt | done |
+| Screens/Onboarding/OnboardingView.swift | screens/onboarding/OnboardingScreen.kt | done |
+| Screens/Onboarding/HowToPlayView.swift | screens/onboarding/HowToPlaySheet.kt | done |
+| Screens/Lobby/LobbyView.swift | screens/lobby/LobbyScreen.kt | done |
+| Screens/Game/PlayerMenu.swift | screens/game/PlayerMenu.kt | done |
+| Screens/Game/GameView.swift | screens/game/GameScreen.kt | done |
+| Screens/Game/PlayersStrip.swift | screens/game/PlayersStrip.kt | done |
+| Screens/Game/DealLayer.swift | screens/game/DealSpots.kt (done), screens/game/DealLayer.kt | done |
+| Screens/Game/MyHand.swift | screens/game/MyHand.kt | done |
+| Screens/Game/ActionPanel.swift | screens/game/ActionPanel.kt | done |
+| Screens/Game/Banner.swift | screens/game/Banner.kt | done |
+| Screens/Game/GameOverView.swift | screens/game/GameOverScreen.kt | done |
 | Resources/Assets.xcassets/Sounds | res/raw/sfx_*.wav (tools/make_sounds.sh) | done |
 | Resources/Assets.xcassets/AppIcon | res/mipmap-*/ic_launcher* (tools/make_icon.sh) | done |
 | Resources/InfoPlist.xcstrings | res/values/strings.xml, res/values-ar/strings.xml | done |
 | Resources/GoogleService-Info.plist | app/google-services.json | done |
 
-Milestones: skeleton ✅ · models + backend ✅ · Home/Onboarding · Lobby · Game · deal + showdown · sounds · polish/tablet/RTL · unit tests · device checks.
+Milestones: skeleton ✅ · models + backend ✅ · Home/Onboarding ✅ · Lobby ✅ · Game ✅ · deal + showdown ✅ · sounds ✅ · polish/tablet/RTL ✅ · unit tests ✅ (126) · device checks ✅ (see NOTES.md, "Checked on devices").
 
 ## Conventions (read before porting a screen)
 

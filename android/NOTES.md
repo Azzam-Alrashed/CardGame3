@@ -61,3 +61,42 @@ Newest at the bottom of each section.
   the same: `values-ar/strings.xml` has only `app_name`, and lint's MissingTranslation check is off (`app/lint.xml`).
 - With `supportsRtl`, an Arabic phone lays the app out right to left, as iOS does when it runs in Arabic.
   `generateLocaleConfig` lists English and Arabic for Android 13's per-app language setting.
+
+## Screens (choices made while porting)
+
+- **Text direction.** Theme text reads in its own direction and lines up with the layout's leading edge, like
+  iOS's natural text, so English sentences stay readable in an Arabic layout. Rolling numbers, the card fan and
+  the small cards are always laid out left to right (they're physical, and digits run left to right).
+- **Rolling numbers.** SwiftUI's `.numericText()` is a per-character roll (only changed characters move). Point
+  pills at the verdict count up from 0 over 0.8 s, as iOS's code intends.
+- **Room code field** keeps a `TextFieldState` with an input transformation (capitals, letters only, four at most):
+  reshaping the value in `onValueChange` made Gboard drop letters. Its keyboard key is "Go" (Android has no Join).
+- **How to play** is a full-height bottom sheet with a Done bar and a large title that collapses as it scrolls.
+- **Lobby grid** is a custom layout: badges pop in and out and slide to their places, as LazyVGrid does.
+- **Player menu** opens on long press only; taps on things inside (✕, No/Deal) still work. It merges the player
+  into one TalkBack stop.
+- **Countdown** ticks exactly when the seconds left change (iOS ticks once a second from when it appears).
+- **Deal animation.** My dealt cards land on the tilted card's real center. Flying-card shadows need Android 9+.
+- **Held − / +** repeat after 0.5 s, then every 0.1 s (iOS doesn't say). TalkBack calls them "Less" and "More".
+- **Confetti** runs until the last piece has fallen off a tall screen (at least 4 s).
+- **Suits** carry U+FE0E everywhere text shows them, so ♥ and ♦ never turn into red emoji.
+- **Launch screen** is plain lime: Android 12's splash crops the icon's scene into a circle.
+
+## Checked on devices
+
+- `./gradlew assembleDebug lint testDebugUnitTest`: passes, 0 lint errors, 126 unit tests (hand names and
+  ranking checked against the server's `hands.ts`, the reveal's length against `revealMs`, the bots' peeks
+  against the Swift code, decoding of real room documents, formatting, layout and sound timing).
+- Emulator (medium_phone, Android 16), live Firebase: onboarding, home, lobby, a full solo game against 3 AI
+  players (bet, all in, a deal accepted, offers, reveal, staged showdown, knocked out, game over, Play again),
+  stepping away and Back to game, the 45-second turn running out and a bot taking the seat, Take my seat back,
+  How to play, the sound toggle, silence while the ringer is on silent, tap to copy the code.
+- Android and the iOS Simulator in one room: the Android phone created it, the iPhone joined, and a full round
+  played with moves from both sides (bet, offer, reject, reveal); both showed the same showdown and verdict.
+- Arabic (right to left) and a 2560×1600 tablet in landscape.
+
+## Known differences and open items
+
+- The font (see Look). Everything else on screen was compared with the iOS Simulator and the App Store screenshots.
+- Not tried on a physical Android phone, or on Android 8 (minSdk 26).
+- Reveal timing between two phones depends on their clocks being right, as on iOS.

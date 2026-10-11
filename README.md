@@ -40,7 +40,7 @@ The full rules are in **[RULES.md](RULES.md)**.
 | `ios/` | iOS app in SwiftUI (`CardGame3.xcodeproj`) |
 | `assets/` | Logo and wordmark, and the script that builds the sound set (sounds by [Kenney](https://kenney.nl), CC0) |
 | `docs/` | Landing page for GitHub Pages: one static `index.html` plus images in `docs/img/` |
-| `android/` | Android app in Kotlin *(coming soon)* |
+| `android/` | Android app in Kotlin and Jetpack Compose. [PORTING.md](android/PORTING.md) maps it to the iOS code; [NOTES.md](android/NOTES.md) logs its choices |
 
 Tech choices are explained in **[TECH_STACK.md](TECH_STACK.md)**.
 
@@ -102,6 +102,17 @@ The Xcode project is committed and is the source of truth, including the signing
 
 To install on your iPhone, select it as the device and set your **Team** under Signing & Capabilities.
 
+## Android app
+
+You need JDK 21 and the Android SDK. From `android/`:
+
+```bash
+./gradlew assembleDebug lint testDebugUnitTest
+./gradlew installDebug
+```
+
+`./gradlew installDebug -Pcardgame3.emulators` builds a debug app that uses the local Firebase emulators instead of the live project, like the iOS "Emulators" scheme. How the port maps to the iOS code is in [android/PORTING.md](android/PORTING.md), and the choices it made in [android/NOTES.md](android/NOTES.md).
+
 ## Status
 
 - [x] House rules written down
@@ -116,7 +127,7 @@ To install on your iPhone, select it as the device and set your **Team** under S
 - [x] AI players added by the host
 - [x] 0.1: bots and timers on the server, turn timer, rematch, reporting, hand names
 - [ ] Share with friends through TestFlight
-- [ ] Android app
+- [x] Android app: every feature above, on phones and tablets, playing with iPhones in the same rooms
 
 ## License
 
