@@ -104,7 +104,7 @@ class HandValueTest {
     @Test fun suitStrengthMatchesServer() {
         // suitStrength in cards.ts: ♠ > ♥ > ♦ > ♣.
         assertEquals(mapOf("S" to 4, "H" to 3, "D" to 2, "C" to 1), HandValue.suitStrength)
-        assertEquals(mapOf(4 to "♠", 3 to "♥", 2 to "♦", 1 to "♣"), HandValue.suitSymbol)
+        assertEquals(mapOf(4 to "♠\uFE0E", 3 to "♥\uFE0E", 2 to "♦\uFE0E", 1 to "♣\uFE0E"), HandValue.suitSymbol)
     }
 
     // Against the server

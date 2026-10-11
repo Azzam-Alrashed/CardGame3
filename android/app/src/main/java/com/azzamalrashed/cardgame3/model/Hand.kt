@@ -45,7 +45,8 @@ data class HandValue(
 
     companion object {
         val suitStrength = mapOf("S" to 4, "H" to 3, "D" to 2, "C" to 1)
-        val suitSymbol = mapOf(4 to "♠", 3 to "♥", 2 to "♦", 1 to "♣")
+        /** For showing: U+FE0E asks for the plain text look of ♥ and ♦, never the red emoji one. */
+        val suitSymbol = mapOf(4 to "♠\uFE0E", 3 to "♥\uFE0E", 2 to "♦\uFE0E", 1 to "♣\uFE0E")
 
         /** The value of 1 to 4 cards, or null for none (or too many). */
         fun of(cards: List<Card>): HandValue? {

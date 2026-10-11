@@ -40,7 +40,7 @@
     <string name="onboarding_hand_two_pairs">Two pairs</string>
     <string name="onboarding_hand_one_pair">One pair</string>
     <string name="onboarding_hand_high_card">High card</string>
-    <string name="onboarding_hand_no_ties">No ties: suits break them, ♠ &gt; ♥ &gt; ♦ &gt; ♣</string>
+    <string name="onboarding_hand_no_ties">No ties: suits break them, ♠\uFE0E &gt; ♥\uFE0E &gt; ♦\uFE0E &gt; ♣\uFE0E</string>
 
     <!-- How to play -->
     <string name="onboarding_rules_done">Done</string>

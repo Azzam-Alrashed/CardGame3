@@ -3,9 +3,9 @@ package com.azzamalrashed.cardgame3.screens.game
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
 
@@ -38,7 +38,12 @@ val LocalDealSpots = staticCompositionLocalOf { DealSpots() }
 /** Marks this view as a place the deal starts from or lands on (nothing for null). */
 fun Modifier.dealSpot(spot: DealSpot?): Modifier = if (spot == null) this else composed {
     val spots = LocalDealSpots.current
-    onGloballyPositioned { spots.frames[spot] = Rect(it.positionInRoot(), it.size.toSize()) }
+    onGloballyPositioned {
+        // The true center (through any rotation or scale above), with the view's own unrotated size.
+        val size = it.size.toSize()
+        val center = it.localToRoot(Offset(size.width / 2, size.height / 2))
+        spots.frames[spot] = Rect(center - Offset(size.width / 2, size.height / 2), size)
+    }
 }
 
 /** Shared sizes: the deal lands each card exactly where these views draw it. */
