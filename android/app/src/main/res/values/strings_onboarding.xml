@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    First-launch intro and How to play (iOS: Screens/Onboarding/OnboardingView.swift, HowToPlayView.swift).
+    The title of How to play is the shared how_to_play.
+-->
+<resources>
+    <!-- Intro -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_next">Next</string>
+
+    <string name="onboarding_welcome_text">A betting card game for 4 to 13 friends. Everyone starts with 5,000 points. Hit zero and you\'re out.</string>
+    <string name="onboarding_welcome_points">5,000</string>
+    <string name="onboarding_welcome_points_each">points each</string>
+    <string name="onboarding_welcome_bubble">Hi!</string>
+
+    <string name="onboarding_bet_title">Bet or sit out</string>
+    <string name="onboarding_bet_text">You get 4 cards. To enter, bet more than the highest bet so far, or go all in. Sitting out is free. The highest bet makes you the boss.</string>
+    <string name="onboarding_bet_bubble">1,500!</string>
+    <string name="onboarding_bet_out_bubble">I\'m out</string>
+
+    <string name="onboarding_deal_title">Make a deal</string>
+    <string name="onboarding_deal_text">Scared of the boss? Offer to step aside for a cut of the boss\'s winnings. The boss accepts or rejects. Bluffing is allowed.</string>
+    <string name="onboarding_deal_boss">BOSS</string>
+    <string name="onboarding_deal_offer_bubble">Deal for 500?</string>
+    <string name="onboarding_deal_accept_bubble">Deal!</string>
+
+    <string name="onboarding_reveal_title">Reveal!</string>
+    <string name="onboarding_reveal_text">Everyone without a deal shows their hand with the boss. Beat the boss and you win the boss\'s bet. Lose and you lose your own.</string>
+
+    <string name="onboarding_name_title">What should we call you?</string>
+    <string name="onboarding_name_text">Your friends will see this name at the table.</string>
+    <string name="onboarding_name_hi">Hi, %1$s!</string>
+    <string name="onboarding_name_who">Who are you?</string>
+    <string name="onboarding_name_placeholder">Your name</string>
+    <string name="onboarding_lets_play">Let\'s play</string>
+
+    <!-- The five hands, best to worst (HandRanking) -->
+    <string name="onboarding_hand_four">Four of a kind</string>
+    <string name="onboarding_hand_three">Three of a kind</string>
+    <string name="onboarding_hand_two_pairs">Two pairs</string>
+    <string name="onboarding_hand_one_pair">One pair</string>
+    <string name="onboarding_hand_high_card">High card</string>
+    <string name="onboarding_hand_no_ties">No ties: suits break them, ♠ &gt; ♥ &gt; ♦ &gt; ♣</string>
+
+    <!-- How to play -->
+    <string name="onboarding_rules_done">Done</string>
+    <string name="onboarding_rules_hands">Hands, best to worst</string>
+    <string name="onboarding_rules_replay_intro">Replay the intro</string>
+    <string name="onboarding_rules_contact">Contact us</string>
+
+    <string name="onboarding_rules_setup">Setup</string>
+    <string-array name="onboarding_rules_setup_lines">
+        <item>4 to 13 players. The deck has one rank per player: 4 players play with A, K, Q, J.</item>
+        <item>Everyone gets 4 cards and starts with 5,000 points. Reaching 0 knocks you out.</item>
+    </string-array>
+
+    <string name="onboarding_rules_betting">Betting</string>
+    <string-array name="onboarding_rules_betting_lines">
+        <item>Starts with the player after the dealer, going right.</item>
+        <item>Enter by betting, or withdraw for free and sit out this round.</item>
+        <item>Bets go up in steps of 500, starting at 500. You must beat the highest bet so far, or go all in.</item>
+        <item>The highest bettor is the boss. On a tie, the latest one to reach it.</item>
+        <item>You have 45 seconds per turn. If time runs out, a bot plays your seat until you take it back.</item>
+    </string-array>
+
+    <string name="onboarding_rules_deals">Deals</string>
+    <string-array name="onboarding_rules_deals_lines">
+        <item>Before the reveal, others can offer to withdraw in return for some of the boss\'s winnings.</item>
+        <item>Offers are in steps of 500 and everyone sees them. Bluffing is allowed.</item>
+        <item>Accepted deals together can never be more than the boss\'s bet.</item>
+        <item>The boss accepts or rejects. An acceptance can\'t be undone; a rejected player may offer again.</item>
+    </string-array>
+
+    <string name="onboarding_rules_reveal">Reveal</string>
+    <string-array name="onboarding_rules_reveal_lines">
+        <item>The boss chooses when to reveal, or the timer runs out.</item>
+        <item>Everyone without an accepted deal reveals with the boss.</item>
+        <item>Boss wins: keeps the bet, gains the same amount, then pays the accepted deals.</item>
+        <item>Someone beats the boss: that player wins the boss\'s bet. Losers lose their own bets.</item>
+        <item>Players with a deal get nothing if the boss loses, but lose nothing either.</item>
+    </string-array>
+
+    <string name="onboarding_rules_automatic">Automatic wins</string>
+    <string-array name="onboarding_rules_automatic_lines">
+        <item>Only one player enters: they win their bet.</item>
+        <item>Everyone else takes a deal: the boss wins the bet and pays all deals.</item>
+    </string-array>
+
+    <string name="onboarding_rules_between">Between rounds</string>
+    <string-array name="onboarding_rules_between_lines">
+        <item>The dealer passes one seat to the right.</item>
+        <item>As players are knocked out, the deck shrinks to match.</item>
+        <item>If everyone withdraws, the cards are reshuffled and the next dealer deals.</item>
+        <item>The next round is dealt automatically a few seconds after the result.</item>
+    </string-array>
+
+    <string name="onboarding_rules_end">End of game</string>
+    <string-array name="onboarding_rules_end_lines">
+        <item>The game ends when fewer than 4 players remain. Most points wins.</item>
+        <item>Equal points: whoever reached it first. Same round: closest to the dealer\'s right.</item>
+    </string-array>
+
+    <string name="onboarding_rules_nicely">Playing nicely</string>
+    <string-array name="onboarding_rules_nicely_lines">
+        <item>Long-press a player to report their name, or hide it on your phone.</item>
+    </string-array>
+</resources>

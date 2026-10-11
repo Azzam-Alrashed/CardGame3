@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Home screen (iOS: Screens/Home/HomeView.swift). The "?" button's label is the shared how_to_play. -->
+<resources>
+    <string name="home_tagline">Bet big. Make a deal. Reveal.</string>
+    <string name="home_back_to_game">Back to game %1$s</string>
+    <string name="home_your_name">Your name</string>
+    <string name="home_create_room">Create room</string>
+    <string name="home_room_code">Room code</string>
+    <string name="home_join">Join</string>
+    <string name="home_deal_bubble">Deal?</string>
+</resources>
