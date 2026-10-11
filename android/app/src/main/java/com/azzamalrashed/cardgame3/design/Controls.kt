@@ -87,6 +87,8 @@ fun PillButton(
 ) {
     val interaction = remember { MutableInteractionSource() }
     val scale = pressFeedback(interaction, 0.96f)
+    // Dims and brightens with the snappy spring when enabled changes, like SwiftUI's animated `.disabled`.
+    val opacity by animateFloatAsState(if (enabled) 1f else 0.35f, swiftSpring(0.5, 0.15), label = "enabled")
     val foreground = if (primary) Color.White else Theme.ink
     Box(
         modifier
@@ -94,7 +96,7 @@ fun PillButton(
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
-                alpha = if (enabled) 1f else 0.35f
+                alpha = opacity
             }
             .background(if (primary) Theme.ink else Color.White.copy(alpha = 0.35f), CircleShape)
             .then(if (primary) Modifier else Modifier.border(2.dp, Theme.ink, CircleShape))

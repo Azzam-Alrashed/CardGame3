@@ -43,7 +43,8 @@ fun frameTime(until: Long?, fps: Int = 60): Long {
 fun frameTicks(until: Long?, fps: Int = 60): State<Long> {
     val tick = remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(until, fps) {
-        val last = (until ?: 0L) + 100
+        // A last frame a little after the end; `Long.MAX_VALUE` (forever) mustn't overflow.
+        val last = (until ?: 0L).let { if (it > Long.MAX_VALUE - 100) Long.MAX_VALUE else it + 100 }
         while (true) {
             if (fps >= 60) withFrameMillis { } else delay(1000L / fps)
             tick.longValue = System.currentTimeMillis()
