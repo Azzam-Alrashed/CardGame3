@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The banner over the table, the staged showdown and the game over screen.
+    English copied word for word from ios/CardGame3/Screens/Game/Banner.swift and GameOverView.swift.
+-->
+<resources>
+    <!-- Banner: betting -->
+    <string name="results_your_turn">Your turn</string>
+    <string name="results_their_turn">%1$s\'s turn</string>
+    <string name="results_highest_bet">Highest bet %1$s</string>
+    <string name="results_no_bets">No bets yet</string>
+
+    <!-- Banner: deals -->
+    <string name="results_deal_time">Deal time</string>
+    <string name="results_you_are_boss">You\'re the boss · %1$s left for deals</string>
+    <string name="results_they_are_boss">%1$s is the boss · %2$s left for deals</string>
+
+    <!-- The showdown and the round's result -->
+    <string name="results_showdown">Showdown!</string>
+    <string name="results_you_reveal">You reveal…</string>
+    <string name="results_they_reveal">%1$s reveals…</string>
+    <string name="results_you">You</string>
+    <string name="results_boss">Boss</string>
+    <string name="results_best_so_far">Best so far</string>
+    <string name="results_redeal">Everyone folded.\nRedeal!</string>
+    <string name="results_you_win_amount">You win %1$s!</string>
+    <string name="results_they_win_amount">%1$s wins %2$s!</string>
+    <string name="results_boss_falls">The boss falls!</string>
+    <string name="results_won_on_kicker">Won on the kicker!</string>
+    <string name="results_won_on_suit">Won on the suit! %1$s beats %2$s</string>
+    <string name="results_paid_in_deals">Paid %1$s in deals</string>
+    <!-- A round's gain, e.g. "+1,500" (losses and zero show the number alone). -->
+    <string name="results_gain">+%1$s</string>
+
+    <!-- Game over -->
+    <string name="results_you_win">You win!</string>
+    <string name="results_they_win">%1$s wins!</string>
+    <!-- Places after the three medals: "4." -->
+    <string name="results_place">%1$d.</string>
+    <string name="results_play_again">Play again</string>
+    <string name="results_join_rematch">Join the rematch</string>
+    <string name="results_join_their_rematch">Join %1$s\'s rematch</string>
+    <string name="results_back_home">Back home</string>
+</resources>

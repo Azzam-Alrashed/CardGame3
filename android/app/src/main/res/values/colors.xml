@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Theme.lime: the home screen's color, and the logo's background. -->
+    <color name="ic_launcher_background">#7DE31A</color>
+    <color name="lime">#7DE31A</color>
+</resources>
