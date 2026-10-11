@@ -72,7 +72,7 @@ SwiftUI `.offset(x:)` is physical: use `Modifier.offset` for things that should 
 `graphicsLayer { rotationZ = deg; transformOrigin = TransformOrigin(0.5f, 1f) }`.
 
 **Motion.** `.spring(duration: d, bounce: b)` → `swiftSpring(d, b)`; `.smooth` = `swiftSpring(0.5)`,
-`.snappy` = `swiftSpring(0.5, 0.15)`, `.bouncy` = `swiftSpring(0.5, 0.3)`, `.easeInOut` = `tween(350, easing = FastOutSlowInEasing)`.
+`.snappy` = `swiftSpring(0.5, 0.15)`, `.bouncy` = `swiftSpring(0.5, 0.3)`, `.easeInOut` = `tween(350, easing = EaseInOut)`.
 `TimelineView(FramesUntil(end:, fps:))` → `frameTime(until, fps)` (or `frameTicks` inside draw code);
 `TimelineView(.periodic(by:))` → `periodicTime(ms)`; `.onChange(of:)` → `OnChange(value) { old, new -> }`;
 Reduce Motion → `reduceMotion()`. `withAnimation` + state → `animate*AsState` / `Animatable` with the same spec.

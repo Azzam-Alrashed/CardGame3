@@ -2,7 +2,7 @@ package com.azzamalrashed.cardgame3.screens.home
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
+import com.azzamalrashed.cardgame3.design.EaseInOut
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -361,6 +361,6 @@ internal fun bobOffset(): State<Float> =
     rememberInfiniteTransition(label = "bob").animateFloat(
         initialValue = 4f,
         targetValue = -4f,
-        animationSpec = infiniteRepeatable(tween(2000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        animationSpec = infiniteRepeatable(tween(2000, easing = EaseInOut), RepeatMode.Reverse),
         label = "bob",
     )

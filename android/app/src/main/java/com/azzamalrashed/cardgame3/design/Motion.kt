@@ -1,6 +1,7 @@
 package com.azzamalrashed.cardgame3.design
 
 import android.provider.Settings
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.spring
 import androidx.compose.runtime.Composable
@@ -23,6 +24,9 @@ fun <T> swiftSpring(duration: Double = 0.5, bounce: Double = 0.0, visibilityThre
     val damping = if (bounce >= 0) 1 - bounce else 1 / (1 + bounce)
     return spring(dampingRatio = damping.toFloat(), stiffness = stiffness.toFloat(), visibilityThreshold = visibilityThreshold)
 }
+
+/** SwiftUI's `.easeInOut` curve (Material's FastOutSlowIn is a different one). Default duration 0.35 s. */
+val EaseInOut = CubicBezierEasing(0.42f, 0f, 0.58f, 1f)
 
 /**
  * The wall-clock time (epoch ms), redrawn every frame (or `fps` times a second) until `until`, then still.

@@ -2,7 +2,7 @@ package com.azzamalrashed.cardgame3.screens.onboarding
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.FastOutSlowInEasing
+import com.azzamalrashed.cardgame3.design.EaseInOut
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -96,7 +96,7 @@ fun OnboardingScreen(backend: Backend, onFinish: () -> Unit) {
     val page = pager.targetPage
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
-    val background by animateColorAsState(pageColors[page], tween(350, easing = FastOutSlowInEasing), label = "page color")
+    val background by animateColorAsState(pageColors[page], tween(350, easing = EaseInOut), label = "page color")
     // The name field takes focus once its page has settled (see NamePage); leaving it puts the keyboard away.
     OnChange(page) { _, new -> if (new != lastPage) focusManager.clearFocus() }
     val nameFocused = page == lastPage && !pager.isScrollInProgress
