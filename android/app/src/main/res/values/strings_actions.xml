@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- My hand (MyHand.kt) and the action panel (ActionPanel.kt). English from MyHand.swift and ActionPanel.swift. -->
+<resources>
+    <!-- My hand -->
+    <string name="hand_hint">Tap your cards to look</string>
+    <!-- TalkBack says "Double-tap to turn it over" on a face-down card, iOS's VoiceOver hint. -->
+    <string name="hand_turn_over">turn it over</string>
+
+    <!-- A bot plays my seat -->
+    <string name="actions_bot_emoji" translatable="false">🤖</string>
+    <string name="actions_bot_playing">A bot is playing your seat</string>
+    <string name="actions_take_seat_back">Take my seat back</string>
+
+    <!-- Betting -->
+    <string name="actions_bet">Bet %1$s</string>
+    <string name="actions_all_in">All in %1$s</string>
+    <string name="actions_withdraw">Withdraw</string>
+    <string name="actions_in_with">You\'re in with %1$s. Waiting for the others…</string>
+    <string name="actions_sat_out">You sat this one out.</string>
+    <string name="actions_turn_coming">Look at your cards… your turn is coming.</string>
+    <!-- The − and + buttons around the amount (no text on iOS). -->
+    <string name="actions_less">Less</string>
+    <string name="actions_more">More</string>
+
+    <!-- Deals -->
+    <string name="actions_boss_waiting">You\'re the boss. Wait for offers, or reveal now.</string>
+    <string name="actions_asks">asks %1$s</string>
+    <string name="actions_no">No</string>
+    <string name="actions_deal">Deal</string>
+    <string name="actions_reveal">Reveal!</string>
+    <!-- %1$s: the amount, %2$s: the boss's name. -->
+    <string name="actions_deal_locked">Deal locked: you get %1$s if %2$s wins.</string>
+    <string name="actions_offer">Offer to withdraw for %1$s</string>
+    <string name="actions_change_offer">Change offer to %1$s</string>
+    <string name="actions_no_room">No room left for deals. Get ready to reveal!</string>
+    <string name="actions_watching">Watching the deals…</string>
+
+    <!-- After the round -->
+    <string name="actions_skip">Skip</string>
+    <string name="actions_next_round">Next round</string>
+    <!-- %1$s: seconds until the server deals it. -->
+    <string name="actions_next_round_in">Next round · %1$s</string>
+    <string name="actions_dealing">Dealing…</string>
+</resources>
