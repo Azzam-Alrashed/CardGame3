@@ -37,6 +37,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
@@ -118,9 +119,13 @@ private fun DrawScope.drawDeal(clock: DealClock, me: String?, spots: DealSpots, 
     for (flight in clock.timeline.flights(t)) {
         val slot = if (flight.uid == me) rect(DealSpot.Hand(flight.card)) else null
         val card = if (slot != null) {
-            // The slot may be the tilted card's bounding box: its center is right, its width isn't.
+            // The slot is the card before its tilt. The card tilts about its bottom center, which moves its own
+            // center a little sideways and down: land there, so the card doesn't jump as it appears.
+            val angle = Math.toRadians(TableLayout.handAngle(flight.card).toDouble())
+            val half = TableLayout.handCardWidth.toPx() * 1.4f / 2
+            val landing = slot.center + Offset((half * sin(angle)).toFloat(), (half * (1 - cos(angle))).toFloat())
             flyingCard(
-                flight.progress, deck, slot.center,
+                flight.progress, deck, landing,
                 TableLayout.handCardWidth.toPx(), TableLayout.handAngle(flight.card),
                 DECK_CARD_WIDTH.toPx(), 90.dp.toPx(),
             )
