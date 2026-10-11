@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Long-press menu on another player (screens/game/PlayerMenu.kt). English from ios/CardGame3/Screens/Game/PlayerMenu.swift. -->
+<resources>
+    <string name="player_menu_report">Report name…</string>
+    <string name="player_menu_hide">Hide name</string>
+    <string name="player_menu_show">Show name</string>
+    <!-- %1$s: the player's name. -->
+    <string name="player_menu_report_title">Report %1$s?</string>
+    <string name="player_menu_report_message">We\'ll review this name.</string>
+    <string name="player_menu_thanks_title">Thanks for telling us</string>
+    <string name="player_menu_thanks_message">We\'ll review the report. You can also hide their name on this phone.</string>
+    <string name="player_menu_hide_theirs">Hide their name</string>
+</resources>

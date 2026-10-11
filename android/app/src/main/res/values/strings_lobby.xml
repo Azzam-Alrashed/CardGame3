@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The lobby (screens/lobby/LobbyScreen.kt). English from ios/CardGame3/Screens/Lobby/LobbyView.swift. -->
+<resources>
+    <string name="lobby_tap_to_copy">Tap to copy the code</string>
+    <string name="lobby_copied">Copied!</string>
+    <!-- Android only: the clipboard entry's label (iOS's pasteboard has none). -->
+    <string name="lobby_clip_label">Room code</string>
+    <!-- %1$s: players in the room, %2$s: the most a table can have (13). -->
+    <string name="lobby_player_count">%1$s / %2$s players</string>
+    <string name="lobby_invite">Invite</string>
+    <!-- Shared to other apps. %1$s: the room code. -->
+    <string name="lobby_invite_message">Join my مداقش table! Room code: %1$s</string>
+
+    <string name="lobby_tag_ai">AI</string>
+    <string name="lobby_tag_host">Host</string>
+    <string name="lobby_tag_host_you">Host · You</string>
+    <string name="lobby_tag_you">You</string>
+    <!-- Accessibility label of the ✕ on a player. %1$s: their name. -->
+    <string name="lobby_remove_player">Remove %1$s</string>
+    <!-- %1$s: the player's name. -->
+    <string name="lobby_remove_title">Remove %1$s?</string>
+    <string name="lobby_remove">Remove</string>
+
+    <string name="lobby_add_ai">Add AI player 🤖</string>
+    <!-- %1$s: how many more players are needed. -->
+    <string name="lobby_need_more">Need %1$s more to start</string>
+    <string name="lobby_start">Start game</string>
+    <string name="lobby_waiting">Waiting for the host to start</string>
+    <string name="lobby_leave">Leave room</string>
+</resources>
