@@ -104,8 +104,6 @@ private fun <T> leaderSpring(threshold: T? = null) = swiftSpring(0.35, 0.4, thre
 /** `.snappy`. */
 private fun <T> snappy(threshold: T? = null) = swiftSpring(0.5, 0.15, threshold)
 
-/** U+FE0E: the plain (text) look of ♥ and ♦ in the callout, never the emoji one. */
-private const val TEXT_STYLE = "\uFE0E"
 
 /** Big headline for what is happening right now, and the staged showdown. (iOS: Banner.swift) */
 @Composable
@@ -396,7 +394,7 @@ private fun calloutText(round: PublicRound): String? {
     val bossFalls = if (callout.bossFalls) stringResource(R.string.results_boss_falls) else null
     val close = when (val close = callout.close) {
         Showdown.Close.Kicker -> stringResource(R.string.results_won_on_kicker)
-        is Showdown.Close.Suit -> stringResource(R.string.results_won_on_suit, close.winner + TEXT_STYLE, close.runnerUp + TEXT_STYLE)
+        is Showdown.Close.Suit -> stringResource(R.string.results_won_on_suit, close.winner, close.runnerUp)
         null -> null
     }
     return listOfNotNull(bossFalls, close).joinToString(" ")
