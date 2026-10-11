@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Like iOS (InfoPlist.xcstrings), only the app's name is translated; the rest falls back to English. -->
+<resources>
+    <string name="app_name">مداقش</string>
+</resources>

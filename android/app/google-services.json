@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "628219046474",
+    "project_id": "cardgame-3",
+    "storage_bucket": "cardgame-3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:628219046474:android:043440a17ece549e7154b3",
+        "android_client_info": {
+          "package_name": "com.azzamalrashed.cardgame3"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDiVwVvo7_1apYAMSKzHnKUIY09UH--Ck0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
