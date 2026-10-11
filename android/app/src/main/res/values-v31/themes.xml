@@ -5,5 +5,7 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowSplashScreenBackground">@color/lime</item>
+        <!-- A plain lime launch screen, like iOS's generated one: the icon's scene doesn't survive the splash's round crop. -->
+        <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>
     </style>
 </resources>

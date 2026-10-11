@@ -39,6 +39,7 @@ import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -522,10 +523,13 @@ internal fun TableTemplateText(
     val prefix = if (at < 0) template else template.substring(0, at)
     val suffix = if (at < 0) "" else template.substring(at + TABLE_SLOT.length)
     val full = prefix + (if (at < 0) "" else value) + suffix
-    Row(modifier.clearAndSetSemantics { contentDescription = full }) {
-        if (prefix.isNotEmpty()) Text(prefix, style = style, color = color, maxLines = 1, softWrap = false)
-        if (at >= 0) TableNumericText(value, style, color = color, duration = duration, bounce = bounce)
-        if (suffix.isNotEmpty()) Text(suffix, style = style, color = color, maxLines = 1, softWrap = false)
+    // The pieces of an English sentence, so left to right in every layout (iOS shows it as one LTR string).
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+        Row(modifier.clearAndSetSemantics { contentDescription = full }) {
+            if (prefix.isNotEmpty()) Text(prefix, style = style, color = color, maxLines = 1, softWrap = false)
+            if (at >= 0) TableNumericText(value, style, color = color, duration = duration, bounce = bounce)
+            if (suffix.isNotEmpty()) Text(suffix, style = style, color = color, maxLines = 1, softWrap = false)
+        }
     }
 }
 
@@ -542,19 +546,22 @@ internal fun TableNumericText(
     duration: Double = 0.5,
     bounce: Double = 0.0,
 ) {
-    Row(modifier.clearAndSetSemantics { contentDescription = text }) {
-        text.forEachIndexed { i, c ->
-            key(text.length - i) {
-                AnimatedContent(
-                    targetState = c,
-                    transitionSpec = {
-                        (slideInVertically(swiftSpring(duration, bounce)) { it / 2 } + fadeIn(swiftSpring(duration))) togetherWith
-                            (slideOutVertically(swiftSpring(duration, bounce)) { -it / 2 } + fadeOut(swiftSpring(duration))) using
-                            SizeTransform(clip = false)
-                    },
-                    label = "character",
-                ) { ch ->
-                    Text(ch.toString(), style = style, color = color, maxLines = 1, softWrap = false)
+    // Digits always run left to right, Arabic ones included: the row mustn't mirror in a right-to-left layout.
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+        Row(modifier.clearAndSetSemantics { contentDescription = text }) {
+            text.forEachIndexed { i, c ->
+                key(text.length - i) {
+                    AnimatedContent(
+                        targetState = c,
+                        transitionSpec = {
+                            (slideInVertically(swiftSpring(duration, bounce)) { it / 2 } + fadeIn(swiftSpring(duration))) togetherWith
+                                (slideOutVertically(swiftSpring(duration, bounce)) { -it / 2 } + fadeOut(swiftSpring(duration))) using
+                                SizeTransform(clip = false)
+                        },
+                        label = "character",
+                    ) { ch ->
+                        Text(ch.toString(), style = style, color = color, maxLines = 1, softWrap = false)
+                    }
                 }
             }
         }
