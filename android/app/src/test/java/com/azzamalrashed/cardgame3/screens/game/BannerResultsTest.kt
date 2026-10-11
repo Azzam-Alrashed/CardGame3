@@ -80,7 +80,7 @@ class BannerResultsTest {
     @Test
     fun challengerWinningOnTheSuit() {
         val r = round(showdown("a", listOf("boss", "a")), hands = mapOf("boss" to aceHearts, "a" to aceSpades))
-        assertEquals(Showdown.Callout(bossFalls = true, close = Showdown.Close.Suit("♠", "♥")), Showdown.callout(r))
+        assertEquals(Showdown.Callout(bossFalls = true, close = Showdown.Close.Suit("♠\uFE0E", "♥\uFE0E")), Showdown.callout(r))
     }
 
     @Test
