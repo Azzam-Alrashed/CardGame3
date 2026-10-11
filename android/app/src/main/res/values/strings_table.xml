@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The table: header, players strip (iOS: GameView.swift, PlayersStrip.swift). English is the iOS app's, word for word. -->
+<resources>
+    <!-- Header -->
+    <string name="table_leave">Leave the table</string>
+    <string name="table_leave_title">Leave the table?</string>
+    <string name="table_leave_message">A bot plays your seat with your points until you come back.</string>
+    <string name="table_leave_choice">Leave · a bot plays for me</string>
+    <!-- %1$s: the round number, already formatted. -->
+    <string name="table_round">Round %1$s</string>
+
+    <!-- Players strip -->
+    <string name="table_you">You</string>
+    <!-- %1$s: a player's name. -->
+    <string name="table_away">%1$s · away</string>
+    <string name="table_out">Out</string>
+    <!-- Status tags under each player. %1$s: a short amount ("3.5K"). -->
+    <string name="table_boss">Boss %1$s</string>
+    <string name="table_deal">Deal %1$s</string>
+    <string name="table_asks">Asks %1$s</string>
+    <string name="table_bet">Bet %1$s</string>
+    <!-- Badges on a player's blob: a bot plays this seat; this player deals. -->
+    <string name="table_bot_badge" translatable="false">🤖</string>
+    <string name="table_dealer_badge">D</string>
+    <!-- The small cards in front of a player, for TalkBack. %1$s: how many (already formatted). -->
+    <string name="table_not_looked">Hasn\'t looked at their cards</string>
+    <string name="table_looked">Looked at %1$s of 4 cards</string>
+</resources>
